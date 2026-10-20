@@ -872,3 +872,216 @@ body {
 .fade-in {
   animation: fadeIn 0.4s ease forwards;
 }
+
+/* -------------------------------------------------------------
+ * AUTOMATED MOTORIZED BOOM BARRIER GATE
+ * ------------------------------------------------------------- */
+.gate-mechanism-card {
+  background: radial-gradient(circle at top left, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95));
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  margin-bottom: 20px;
+}
+
+.gate-mechanism-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.gate-stage-pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* Boom Barrier Stage Visualizer */
+.barrier-visualizer {
+  position: relative;
+  height: 140px;
+  background: linear-gradient(180deg, #050b14 0%, #0c1527 100%);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-glass);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 30px 20px 30px;
+}
+
+/* Lane Ground & Road Markings */
+.barrier-road {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 26px;
+  background: #111827;
+  border-top: 2px dashed rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.barrier-road-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* Pillar Base Station */
+.barrier-station {
+  position: relative;
+  width: 42px;
+  height: 80px;
+  background: linear-gradient(180deg, #334155 0%, #0f172a 100%);
+  border-radius: 8px 8px 0 0;
+  border: 2px solid #475569;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  padding: 6px 0;
+}
+
+/* Traffic LED indicator on pillar */
+.traffic-signal-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.signal-led {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #1e293b;
+  transition: all 0.3s ease;
+}
+
+.signal-led.red.active {
+  background: #f43f5e;
+  box-shadow: 0 0 12px #f43f5e;
+}
+
+.signal-led.amber.active {
+  background: #f59e0b;
+  box-shadow: 0 0 12px #f59e0b;
+  animation: pulse-dot 0.8s infinite alternate;
+}
+
+.signal-led.green.active {
+  background: #10b981;
+  box-shadow: 0 0 14px #10b981;
+}
+
+/* Motorized Pivot Joint */
+.barrier-pivot {
+  position: absolute;
+  top: 14px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #94a3b8 30%, #1e293b 80%);
+  border: 2px solid #64748b;
+  z-index: 15;
+  box-shadow: 0 0 8px rgba(0,0,0,0.8);
+}
+
+/* Physical Barrier Arm */
+.barrier-arm {
+  position: absolute;
+  top: 22px;
+  left: 36px;
+  width: 280px;
+  height: 9px;
+  background: repeating-linear-gradient(
+    45deg,
+    #facc15,
+    #facc15 15px,
+    #0f172a 15px,
+    #0f172a 30px
+  );
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), 0 0 12px rgba(250, 204, 21, 0.3);
+  transform-origin: 0% 50%;
+  transform: rotate(0deg);
+  transition: transform 1.2s cubic-bezier(0.34, 1.35, 0.64, 1);
+  z-index: 12;
+}
+
+/* LED Strip on the arm */
+.barrier-arm::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 20px;
+  right: 10px;
+  height: 3px;
+  background: #ef4444;
+  border-radius: 2px;
+  box-shadow: 0 0 8px #ef4444;
+  transition: background 0.4s ease, box-shadow 0.4s ease;
+}
+
+/* When Gate is OPEN: Arm pivots 82 degrees upwards */
+.barrier-arm.open {
+  transform: rotate(-82deg);
+}
+
+.barrier-arm.open::after {
+  background: #10b981;
+  box-shadow: 0 0 12px #10b981;
+}
+
+/* Biometric scanning matrix animation */
+.biometric-scan-matrix {
+  margin-top: 14px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  border: 1px solid var(--border-glass);
+}
+
+.matrix-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+  margin: 8px 0;
+}
+
+.matrix-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #6366f1, #06b6d4, #10b981);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.matrix-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}

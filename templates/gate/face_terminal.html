@@ -128,8 +128,67 @@
 
   </div>
 
-  <!-- Right Side: Scanned Result Card & Registered Resident Roster -->
+  <!-- Right Side: Motorized Barrier Gate Station & Enrolled Resident Roster -->
   <div style="display: flex; flex-direction: column; gap: 24px;">
+
+    <!-- Motorized Barrier Gate Station -->
+    <div class="gate-mechanism-card" id="gateMechanismCard">
+      <div class="gate-mechanism-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fa-solid fa-road-barrier" style="color: var(--accent-cyan); font-size: 1.25rem;"></i>
+          <div>
+            <h4 style="font-weight: 800; font-size: 1.05rem; margin: 0;">Motorized Security Gate</h4>
+            <div style="font-size: 0.75rem; color: var(--text-dim);">Automated Biometric Clearance Lane</div>
+          </div>
+        </div>
+        <div class="gate-stage-pill" id="gateStatusBadge">
+          <span class="signal-led red active" id="badgeLedDot"></span>
+          <span id="gateStatusText">GATE LOCKED</span>
+        </div>
+      </div>
+
+      <!-- Physical Barrier Arm Visualizer -->
+      <div class="barrier-visualizer">
+        <div class="barrier-station">
+          <div class="traffic-signal-box">
+            <div class="signal-led red active" id="trafficLedRed"></div>
+            <div class="signal-led amber" id="trafficLedAmber"></div>
+            <div class="signal-led green" id="trafficLedGreen"></div>
+          </div>
+          <div class="barrier-pivot"></div>
+          <div class="barrier-arm" id="physicalBarrierArm"></div>
+        </div>
+
+        <div class="barrier-road">
+          <span class="barrier-road-text" id="laneWarningText">▲ AUTOMATED STOP LINE • STAND IN FRONT OF SENSOR ▲</span>
+        </div>
+      </div>
+
+      <!-- Biometric Vector Similarity Scanner Matrix -->
+      <div class="biometric-scan-matrix" id="biometricMatrixBox">
+        <div class="matrix-labels">
+          <span id="biometricStageLabel">BIOMETRIC SIMILARITY STATUS</span>
+          <span id="biometricSimilarityVal">STANDBY</span>
+        </div>
+        <div class="matrix-bar">
+          <div class="matrix-fill" id="matrixFillBar"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.74rem; color: var(--text-muted); margin-top: 4px;">
+          <span>OpenCV Haar+LBPH Embedding</span>
+          <span id="gateCountdownText" style="color: var(--accent-emerald); font-weight: 700;"></span>
+        </div>
+      </div>
+
+      <!-- Manual Security Override Buttons -->
+      <div style="display: flex; gap: 8px; margin-top: 14px;">
+        <button type="button" class="btn btn-secondary btn-sm" id="btnManualOpen" style="flex: 1; font-size: 0.76rem;" title="Security Officer Manual Gate Clearance">
+          <i class="fa-solid fa-lock-open" style="color: var(--accent-emerald);"></i> Manual Open
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" id="btnEmergencyLock" style="flex: 1; font-size: 0.76rem;" title="Immediate Emergency Lock">
+          <i class="fa-solid fa-lock" style="color: var(--accent-rose);"></i> Secure Lock
+        </button>
+      </div>
+    </div>
     
     <!-- Match Result Card -->
     <div id="scanResultCard" class="match-result-card" style="display: none;">
@@ -204,65 +263,8 @@
   </div>
 </div>
 
-<script>
-  // Helper to test enrolled resident photo directly
-  async function testResidentPhoto(photoUrl, name) {
-    const statusText = document.getElementById('scannerStatusText');
-    const statusIndicator = document.getElementById('scannerStatusIndicator');
-    statusText.innerText = `FETCHING SAMPLE FOR ${name.toUpperCase()}...`;
-    statusIndicator.style.background = '#8b5cf6';
-
-    try {
-      const response = await fetch(photoUrl);
-      const blob = await response.blob();
-      const formData = new FormData();
-      formData.append('image_file', blob, 'sample.jpg');
-      formData.append('gate_name', 'Gate 1 - North Simulation');
-
-      const apiRes = await fetch('/api/face-recognize/', {
-        method: 'POST',
-        body: formData
-      });
-      const data = await apiRes.json();
-      
-      // Trigger display
-      const resultCard = document.getElementById('scanResultCard');
-      const annotatedImage = document.getElementById('annotatedImage');
-      const videoFeed = document.getElementById('videoFeed');
-
-      videoFeed.style.display = 'none';
-      if (data.annotated_image && annotatedImage) {
-        annotatedImage.src = 'data:image/jpeg;base64,' + data.annotated_image;
-        annotatedImage.style.display = 'block';
-      }
-
-      if (resultCard) {
-        resultCard.style.display = 'block';
-        if (data.match) {
-          resultCard.className = 'match-result-card success fade-in';
-          statusText.innerText = 'ACCESS GRANTED - GATE UNLOCKED';
-          statusIndicator.style.background = '#10b981';
-          document.getElementById('resultName').innerText = data.name;
-          document.getElementById('resultRole').innerText = data.role;
-          document.getElementById('resultFlat').innerText = data.flat;
-          document.getElementById('resultVehicle').innerText = data.vehicle;
-          document.getElementById('resultConfidence').innerText = data.confidence + '%';
-          document.getElementById('resultMessage').innerText = data.message;
-        } else {
-          resultCard.className = 'match-result-card denied fade-in';
-          statusText.innerText = 'ACCESS DENIED';
-          statusIndicator.style.background = '#f43f5e';
-          document.getElementById('resultName').innerText = 'Unregistered';
-          document.getElementById('resultMessage').innerText = data.message;
-        }
-      }
-    } catch (e) {
-      console.error(e);
-      statusText.innerText = 'SIMULATION FAILED';
-    }
-  }
-</script>
 {% endblock %}
+
 
 {% block extra_scripts %}
 <script src="{% static 'js/face_scanner.js' %}"></script>
