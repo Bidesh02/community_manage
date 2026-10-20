@@ -1,0 +1,150 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}AegisGate | Society Operations Platform{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <div class="app-container">
+    {% if user.is_authenticated %}
+    <!-- Sidebar -->
+    <aside class="app-sidebar" id="appSidebar">
+      <div class="sidebar-header">
+        <div class="brand-icon">
+          <i class="fa-solid fa-shield-halved" style="color: #ffffff;"></i>
+        </div>
+        <div>
+          <div class="brand-title">AegisGate</div>
+          <div class="brand-sub">Society Manager</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-category-label">Overview</div>
+        <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+          <span class="nav-icon"><i class="fa-solid fa-chart-pie"></i></span>
+          <span>Dashboard</span>
+        </a>
+
+        <div class="nav-category-label">Gate & Security</div>
+        <a href="{% url 'face_terminal' %}" class="nav-link {% if request.resolver_match.url_name == 'face_terminal' %}active{% endif %}">
+          <span class="nav-icon"><i class="fa-solid fa-camera-viewfinder" style="color: var(--accent-cyan);"></i></span>
+          <span style="font-weight: 600; color: var(--accent-cyan);">Face Gate Scanner</span>
+          <span class="nav-badge pulse">AI</span>
+        </a>
+        <a href="{% url 'visitor_list' %}" class="nav-link {% if 'visitor' in request.resolver_match.url_name %}active{% endif %}">
+          <span class="nav-icon"><i class="fa-solid fa-id-card-clip"></i></span>
+          <span>Visitor Passes</span>
+        </a>
+        <a href="{% url 'biometric_logs' %}" class="nav-link {% if request.resolver_match.url_name == 'biometric_logs' %}active{% endif %}">
+          <span class="nav-icon"><i class="fa-solid fa-fingerprint"></i></span>
+          <span>Biometric Logs</span>
+        </a>
+
+        <div class="nav-category-label">Community & Operations</div>
+        <a href="{% url 'ticket_list' %}" class="nav-link {% if 'ticket' in request.resolver_match.url_name %}active{% endif %}">
+          <span class="nav-icon"><i class="fa-solid fa-screwdriver-wrench"></i></span>
+          <span>Service Tickets</span>
+        </a>
+        <a href="{% url 'notice_list' %}" class="nav-link {% if 'notice' in request.resolver_match.url_name %}active{% endif %}">
+          <span class="nav-icon"><i class="fa-solid fa-bullhorn"></i></span>
+          <span>Notice Board</span>
+        </a>
+        <a href="{% url 'maintenance_list' %}" class="nav-link {% if 'maintenance' in request.resolver_match.url_name %}active{% endif %}">
+          <span class="nav-icon"><i class="fa-solid fa-receipt"></i></span>
+          <span>Maintenance & Dues</span>
+        </a>
+
+        {% if user.is_admin_role or user.is_staff_role %}
+        <div class="nav-category-label">Analytics & Control</div>
+        <a href="http://localhost:8501" target="_blank" class="nav-link" title="Open Streamlit interactive analytics">
+          <span class="nav-icon"><i class="fa-solid fa-chart-line" style="color: #ec4899;"></i></span>
+          <span style="color: #f472b6;">Streamlit Analytics</span>
+          <span class="nav-badge" style="background: #db2777;">PORT 8501</span>
+        </a>
+        <a href="/admin/" target="_blank" class="nav-link">
+          <span class="nav-icon"><i class="fa-solid fa-sliders"></i></span>
+          <span>Django Admin</span>
+        </a>
+        {% endif %}
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="{% url 'profile' %}" style="text-decoration: none; color: inherit;">
+          <div class="user-mini-card">
+            <div class="user-avatar-sm">
+              {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" alt="avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+              {% else %}
+                {{ user.username|make_list|first|upper }}
+              {% endif %}
+            </div>
+            <div class="user-info-text">
+              <div class="user-name-text">{{ user.get_full_name|default:user.username }}</div>
+              <div class="user-role-badge">
+                {{ user.get_role_display }} {% if user.flat_number %}• {{ user.flat_number }}{% endif %}
+              </div>
+            </div>
+            <i class="fa-solid fa-chevron-right" style="font-size: 0.75rem; color: var(--text-dim);"></i>
+          </div>
+        </a>
+      </div>
+    </aside>
+    {% endif %}
+
+    <!-- Main Section -->
+    <main class="app-main">
+      {% if user.is_authenticated %}
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <h1 class="topbar-title">{% block page_title %}Overview{% endblock %}</h1>
+          <div class="topbar-badge-pill">
+            <span class="status-dot"></span>
+            <span>AegisGate Core v2.4 Active</span>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <a href="{% url 'face_terminal' %}" class="btn btn-cyan btn-sm">
+            <i class="fa-solid fa-camera"></i>
+            <span>Gate Scanner</span>
+          </a>
+          <a href="{% url 'ticket_create' %}" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-plus"></i>
+            <span>Raise Ticket</span>
+          </a>
+          <a href="{% url 'logout' %}" class="btn btn-secondary btn-sm" title="Log out">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          </a>
+        </div>
+      </header>
+      {% endif %}
+
+      <div class="content-body">
+        {% if messages %}
+        <div class="messages-container">
+          {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check{% elif message.tags == 'error' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %}"></i>
+              <span>{{ message }}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; cursor: pointer;">&times;</button>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

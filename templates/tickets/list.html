@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Service Requests & Maintenance Tickets{% endblock %}
+
+{% block content %}
+<div class="glass-panel" style="padding: 28px;">
+  <div class="section-header" style="flex-wrap: wrap; gap: 14px;">
+    <div>
+      <h3 class="section-title">
+        <i class="fa-solid fa-screwdriver-wrench" style="color: var(--primary);"></i>
+        Issue Resolution & Support Tickets
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">
+        Track plumbing, electrical, elevator, and security requests with resolution workflows
+      </p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <a href="{% url 'ticket_create' %}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Raise New Ticket
+      </a>
+    </div>
+  </div>
+
+  <!-- Filters Bar -->
+  <form method="GET" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; padding: 16px; background: rgba(255, 255, 255, 0.02); border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+    <div style="flex: 1; min-width: 200px;">
+      <input type="text" name="q" value="{{ search|default:'' }}" class="form-input" placeholder="Search ticket # or title...">
+    </div>
+    <div style="width: 170px;">
+      <select name="status" class="form-select" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        {% for code, label in statuses %}
+        <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="width: 180px;">
+      <select name="category" class="form-select" onchange="this.form.submit()">
+        <option value="">All Categories</option>
+        {% for code, label in categories %}
+        <option value="{{ code }}" {% if category_filter == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="width: 160px;">
+      <select name="priority" class="form-select" onchange="this.form.submit()">
+        <option value="">All Priorities</option>
+        {% for code, label in priorities %}
+        <option value="{{ code }}" {% if priority_filter == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-filter"></i> Apply</button>
+    {% if search or status_filter or category_filter or priority_filter %}
+    <a href="{% url 'ticket_list' %}" class="btn btn-secondary btn-sm" title="Clear Filters"><i class="fa-solid fa-xmark"></i></a>
+    {% endif %}
+  </form>
+
+  <!-- Tickets Table -->
+  <div class="table-responsive">
+    <table class="glass-table">
+      <thead>
+        <tr>
+          <th>Ticket No</th>
+          <th>Subject / Issue</th>
+          <th>Category</th>
+          <th>Resident / Unit</th>
+          <th>Priority</th>
+          <th>Assigned Staff</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in page_obj %}
+        <tr>
+          <td>
+            <a href="{% url 'ticket_detail' t.id %}" class="badge-code" style="color: var(--accent-cyan); text-decoration: none;">
+              {{ t.ticket_number }}
+            </a>
+          </td>
+          <td>
+            <div style="font-weight: 700;">{{ t.title }}</div>
+            <small style="color: var(--text-dim);">{{ t.description|truncatechars:45 }}</small>
+          </td>
+          <td><span class="badge-code">{{ t.get_category_display }}</span></td>
+          <td>
+            {{ t.resident.get_full_name|default:t.resident.username }}
+            {% if t.resident.flat_number %}
+            <div style="font-size: 0.75rem; color: var(--accent-cyan);">Unit {{ t.resident.flat_number }}</div>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge {% if t.priority == 'URGENT' %}badge-urgent{% elif t.priority == 'HIGH' %}badge-open{% else %}badge-progress{% endif %}">
+              {{ t.get_priority_display }}
+            </span>
+          </td>
+          <td>
+            {% if t.assigned_staff %}
+              <span style="font-size: 0.85rem; color: var(--text-muted);"><i class="fa-solid fa-user-gear"></i> {{ t.assigned_staff.get_full_name|default:t.assigned_staff.username }}</span>
+            {% else %}
+              <span style="color: var(--text-dim); font-size: 0.8rem;">Unassigned</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge {% if t.status == 'RESOLVED' or t.status == 'CLOSED' %}badge-resolved{% elif t.status == 'IN_PROGRESS' %}badge-progress{% else %}badge-open{% endif %}">
+              {{ t.get_status_display }}
+            </span>
+          </td>
+          <td style="color: var(--text-dim); font-size: 0.8rem;">{{ t.created_at|date:"M d, H:i" }}</td>
+          <td>
+            <a href="{% url 'ticket_detail' t.id %}" class="btn btn-secondary btn-sm">
+              View <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" style="text-align: center; color: var(--text-dim); padding: 36px 0;">
+            No tickets match your filter criteria.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="pagination-container">
+    <div style="font-size: 0.82rem; color: var(--text-dim);">
+      Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </div>
+    <div class="pagination-links">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" class="btn btn-secondary btn-sm">&larr; Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Visitor Passes & Gate Access Logs{% endblock %}
+
+{% block content %}
+<div class="glass-panel" style="padding: 28px;">
+  <div class="section-header" style="flex-wrap: wrap; gap: 14px;">
+    <div>
+      <h3 class="section-title">
+        <i class="fa-solid fa-id-card-clip" style="color: var(--accent-cyan);"></i>
+        Visitor Log & Entry Passes
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">
+        Track delivery executives, cabs, contractors, and guests entering the society premises
+      </p>
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <a href="{% url 'face_terminal' %}" class="btn btn-cyan">
+        <i class="fa-solid fa-camera"></i> Face Gate Scanner
+      </a>
+      {% if user.is_admin_role or user.is_staff_role %}
+      <a href="{% url 'visitor_checkin' %}" class="btn btn-primary">
+        <i class="fa-solid fa-user-plus"></i> Guard Check-In
+      </a>
+      {% endif %}
+      <a href="{% url 'visitor_preapprove' %}" class="btn btn-secondary">
+        <i class="fa-solid fa-ticket"></i> Pre-Approve Pass
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <form method="GET" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; padding: 16px; background: rgba(255, 255, 255, 0.02); border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+    <div style="flex: 1; min-width: 220px;">
+      <input type="text" name="q" value="{{ search|default:'' }}" class="form-input" placeholder="Search visitor name, flat, pass code, or vehicle...">
+    </div>
+    <div style="width: 180px;">
+      <select name="status" class="form-select" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        <option value="INSIDE" {% if status_filter == 'INSIDE' %}selected{% endif %}>Inside Premises</option>
+        <option value="CHECKED_OUT" {% if status_filter == 'CHECKED_OUT' %}selected{% endif %}>Checked Out</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+    {% if search or status_filter %}
+    <a href="{% url 'visitor_list' %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-xmark"></i></a>
+    {% endif %}
+  </form>
+
+  <!-- Visitors Table -->
+  <div class="table-responsive">
+    <table class="glass-table">
+      <thead>
+        <tr>
+          <th>Pass Code</th>
+          <th>Visitor Name</th>
+          <th>Phone</th>
+          <th>Purpose</th>
+          <th>Target Unit</th>
+          <th>Host Resident</th>
+          <th>Vehicle</th>
+          <th>Entry Mode</th>
+          <th>Status</th>
+          <th>Timestamps</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in page_obj %}
+        <tr>
+          <td><span class="badge-code" style="color: var(--accent-emerald);">{{ v.pass_code }}</span></td>
+          <td><strong>{{ v.visitor_name }}</strong></td>
+          <td>{{ v.phone_number }}</td>
+          <td>{{ v.purpose }}</td>
+          <td><strong style="color: var(--accent-cyan);">{{ v.flat_number }}</strong></td>
+          <td>{{ v.visiting_resident.get_full_name|default:v.visiting_resident.username|default:"General" }}</td>
+          <td>{{ v.vehicle_number|default:"Walk-in" }}</td>
+          <td><span class="badge-code">{{ v.get_entry_type_display }}</span></td>
+          <td>
+            <span class="badge {% if v.status == 'INSIDE' %}badge-open{% elif v.status == 'CHECKED_OUT' %}badge-resolved{% else %}badge-urgent{% endif %}">
+              {{ v.get_status_display }}
+            </span>
+          </td>
+          <td>
+            <div style="font-size: 0.8rem; color: var(--text-dim);">In: {{ v.entry_time|date:"M d, H:i" }}</div>
+            {% if v.exit_time %}
+            <div style="font-size: 0.75rem; color: var(--accent-emerald);">Out: {{ v.exit_time|date:"H:i" }}</div>
+            {% endif %}
+          </td>
+          <td>
+            {% if v.status == 'INSIDE' and user.is_admin_role or user.is_staff_role %}
+            <form method="POST" action="{% url 'visitor_checkout' v.id %}" style="display: inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-secondary btn-sm" title="Log exit time">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Check-Out
+              </button>
+            </form>
+            {% else %}
+            <span style="color: var(--text-dim); font-size: 0.78rem;">Closed</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="11" style="text-align: center; color: var(--text-dim); padding: 36px 0;">
+            No visitor entries found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="pagination-container">
+    <div style="font-size: 0.82rem; color: var(--text-dim);">
+      Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </div>
+    <div class="pagination-links">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-secondary btn-sm">&larr; Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

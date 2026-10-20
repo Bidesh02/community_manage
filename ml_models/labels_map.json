@@ -1,0 +1,23 @@
+{
+  "2": {
+    "id": 2,
+    "name": "Vikram Rathore",
+    "role": "Security Gate Officer / Facility Staff",
+    "flat": "Security Gatehouse A",
+    "vehicle": "N/A"
+  },
+  "3": {
+    "id": 3,
+    "name": "John Doe",
+    "role": "Resident Member",
+    "flat": "A-402",
+    "vehicle": "KA-01-MJ-4521"
+  },
+  "4": {
+    "id": 4,
+    "name": "Sarah Connor",
+    "role": "Resident Member",
+    "flat": "B-204",
+    "vehicle": "DL-04-CA-8890"
+  }
+}

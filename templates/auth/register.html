@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Resident Registration | AegisGate{% endblock %}
+
+{% block content %}
+<div style="max-width: 720px; margin: 30px auto; padding: 0 16px;">
+  <div class="glass-panel" style="padding: 36px;">
+    <div style="margin-bottom: 28px;">
+      <a href="{% url 'login' %}" style="color: var(--text-dim); text-decoration: none; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px;">
+        <i class="fa-solid fa-arrow-left"></i> Back to Sign In
+      </a>
+      <h2 style="font-size: 1.6rem; font-weight: 800;">Register Community Account</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Join the society platform to manage visitors, payments, and biometric gate access.</p>
+    </div>
+
+    <form method="POST" action="{% url 'register' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+        <div class="form-group">
+          <label class="form-label">Username *</label>
+          {{ form.username }}
+          {% if form.username.errors %}<small style="color: var(--accent-rose);">{{ form.username.errors.0 }}</small>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          {{ form.email }}
+          {% if form.email.errors %}<small style="color: var(--accent-rose);">{{ form.email.errors.0 }}</small>{% endif %}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          {{ form.first_name }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          {{ form.last_name }}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          {{ form.role }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          {{ form.phone_number }}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+        <div class="form-group">
+          <label class="form-label">Flat / Unit Number</label>
+          {{ form.flat_number }}
+          <small style="color: var(--text-dim); font-size: 0.75rem;">e.g. A-402, B-105</small>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tower / Block</label>
+          {{ form.block_tower }}
+          <small style="color: var(--text-dim); font-size: 0.75rem;">e.g. Tower 1, Emerald Block</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Vehicle Plate Number (Optional)</label>
+        {{ form.vehicle_number }}
+        <small style="color: var(--text-dim); font-size: 0.75rem;">Allows automated gate clearance</small>
+      </div>
+
+      <!-- Biometric Face Enrollment Box -->
+      <div style="margin: 24px 0; padding: 20px; background: rgba(6, 182, 212, 0.06); border: 1px dashed rgba(6, 182, 212, 0.35); border-radius: var(--radius-md);">
+        <div style="display: flex; align-items: flex-start; gap: 14px;">
+          <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+            <i class="fa-solid fa-camera"></i>
+          </div>
+          <div style="flex: 1;">
+            <div style="font-weight: 700; font-size: 0.95rem; color: #ffffff; margin-bottom: 2px;">
+              Face Recognition Gate Pass (OpenCV Biometric Feature)
+            </div>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
+              Upload a clear frontal portrait photo. The system extracts your facial embedding so the gate scanner automatically opens for you!
+            </p>
+            {{ form.face_photo }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Profile Avatar</label>
+        {{ form.avatar }}
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          {{ form.password }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm Password *</label>
+          {{ form.confirm_password }}
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 10px;">
+        <i class="fa-solid fa-user-plus"></i> Complete Resident Registration
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

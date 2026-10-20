@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Society Notice Board & Broadcasts{% endblock %}
+
+{% block content %}
+<div class="glass-panel" style="padding: 28px;">
+  <div class="section-header" style="flex-wrap: wrap; gap: 14px;">
+    <div>
+      <h3 class="section-title">
+        <i class="fa-solid fa-bullhorn" style="color: var(--accent-amber);"></i>
+        Official Announcements & Alerts
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">
+        Stay updated on maintenance schedules, society elections, festivities, and emergency guidelines
+      </p>
+    </div>
+    {% if user.is_admin_role or user.is_staff_role %}
+    <a href="{% url 'notice_create' %}" class="btn btn-primary">
+      <i class="fa-solid fa-plus"></i> Post Announcement
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Search & Category Filters -->
+  <form method="GET" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 28px; padding: 16px; background: rgba(255, 255, 255, 0.02); border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+    <div style="flex: 1; min-width: 220px;">
+      <input type="text" name="q" value="{{ search|default:'' }}" class="form-input" placeholder="Search notices by keyword...">
+    </div>
+    <div style="width: 220px;">
+      <select name="category" class="form-select" onchange="this.form.submit()">
+        <option value="">All Categories</option>
+        {% for code, label in categories %}
+        <option value="{{ code }}" {% if category == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+    {% if search or category %}
+    <a href="{% url 'notice_list' %}" class="btn btn-secondary btn-sm" title="Clear Filters"><i class="fa-solid fa-xmark"></i></a>
+    {% endif %}
+  </form>
+
+  <!-- Notices Grid Cards -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+    {% for n in page_obj %}
+    <div class="glass-panel-elevated" style="padding: 22px; display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid {% if n.category == 'EMERGENCY' %}var(--accent-rose){% elif n.category == 'MAINTENANCE' %}var(--accent-amber){% elif n.category == 'SECURITY' %}var(--accent-cyan){% else %}var(--primary){% endif %};">
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+          <span class="badge {% if n.category == 'EMERGENCY' %}badge-urgent{% elif n.category == 'MAINTENANCE' %}badge-open{% else %}badge-progress{% endif %}">
+            {{ n.get_category_display }}
+          </span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            {% if n.is_pinned %}
+            <span style="font-size: 0.75rem; color: var(--accent-rose); font-weight: 700;">
+              <i class="fa-solid fa-thumbtack"></i> PINNED
+            </span>
+            {% endif %}
+            {% if user.is_admin_role or n.author == user %}
+            <a href="{% url 'notice_delete' n.id %}" onclick="return confirm('Delete this announcement?')" style="color: var(--text-dim); text-decoration: none; font-size: 0.85rem;" title="Delete Notice">
+              <i class="fa-solid fa-trash-can"></i>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <h4 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 8px; line-height: 1.35;">{{ n.title }}</h4>
+        <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">
+          {{ n.content|linebreaksbr }}
+        </p>
+
+        {% if n.attachment %}
+        <div style="margin-bottom: 14px;">
+          <a href="{{ n.attachment.url }}" target="_blank" class="btn btn-secondary btn-sm" style="font-size: 0.78rem;">
+            <i class="fa-solid fa-paperclip"></i> View Document Attachment
+          </a>
+        </div>
+        {% endif %}
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid var(--border-glass); font-size: 0.75rem; color: var(--text-dim);">
+        <span><i class="fa-solid fa-user-tie"></i> {{ n.author.get_full_name|default:n.author.username }}</span>
+        <span><i class="fa-solid fa-calendar-day"></i> {{ n.created_at|date:"M d, Y" }}</span>
+      </div>
+    </div>
+    {% empty %}
+    <div style="grid-column: 1 / -1; text-align: center; color: var(--text-dim); padding: 40px 0;">
+      <i class="fa-solid fa-bullhorn" style="font-size: 2.2rem; margin-bottom: 10px; color: var(--text-dim);"></i>
+      <p>No announcements found.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="pagination-container">
+    <div style="font-size: 0.82rem; color: var(--text-dim);">
+      Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </div>
+    <div class="pagination-links">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if category %}&category={{ category }}{% endif %}" class="btn btn-secondary btn-sm">&larr; Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if category %}&category={{ category }}{% endif %}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

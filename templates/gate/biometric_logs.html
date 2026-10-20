@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Biometric Gate Logs & Security Audit{% endblock %}
+
+{% block content %}
+<div class="glass-panel" style="padding: 28px;">
+  <div class="section-header">
+    <div>
+      <h3 class="section-title">
+        <i class="fa-solid fa-fingerprint" style="color: var(--accent-cyan);"></i>
+        Biometric Access Audit Trail
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">
+        Historical timeline of OpenCV facial recognition gate clearances and access attempts
+      </p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <a href="{% url 'face_terminal' %}" class="btn btn-cyan btn-sm">
+        <i class="fa-solid fa-camera"></i> Live Scanner
+      </a>
+      <a href="{% url 'retrain_face_model' %}" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-arrows-rotate"></i> Retrain Model
+      </a>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="glass-table">
+      <thead>
+        <tr>
+          <th>Log ID</th>
+          <th>Recognized Name</th>
+          <th>Matched Role</th>
+          <th>Resident Unit</th>
+          <th>Gate Location</th>
+          <th>Confidence</th>
+          <th>Access Result</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in page_obj %}
+        <tr>
+          <td><span class="badge-code">BIO-#{{ log.id }}</span></td>
+          <td><strong>{{ log.recognized_name }}</strong></td>
+          <td>
+            <span class="badge {% if log.matched_role == 'Visitor' %}badge-open{% else %}badge-progress{% endif %}">
+              {{ log.matched_role }}
+            </span>
+          </td>
+          <td>{{ log.user.flat_number|default:"Gate Review" }}</td>
+          <td>{{ log.gate_name }}</td>
+          <td><span class="badge-code">{{ log.confidence_score|floatformat:1 }}%</span></td>
+          <td>
+            <span class="badge {% if log.access_granted %}badge-resolved{% else %}badge-urgent{% endif %}">
+              {% if log.access_granted %}
+                <i class="fa-solid fa-check"></i> GRANTED
+              {% else %}
+                <i class="fa-solid fa-xmark"></i> DENIED
+              {% endif %}
+            </span>
+          </td>
+          <td style="color: var(--text-dim); font-size: 0.82rem;">{{ log.timestamp|date:"M d, Y - H:i:s" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" style="text-align: center; color: var(--text-dim); padding: 32px 0;">
+            No biometric scans recorded yet. Use the Face Gate Scanner to record real-time entries!
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="pagination-container">
+    <div style="font-size: 0.82rem; color: var(--text-dim);">
+      Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </div>
+    <div class="pagination-links">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-sm">&larr; Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

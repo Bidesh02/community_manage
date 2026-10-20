@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Issue Maintenance Invoice{% endblock %}
+
+{% block content %}
+<div style="max-width: 680px; margin: 0 auto;">
+  <div class="glass-panel" style="padding: 32px;">
+    <div style="margin-bottom: 24px;">
+      <a href="{% url 'maintenance_list' %}" style="color: var(--text-dim); text-decoration: none; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px;">
+        <i class="fa-solid fa-arrow-left"></i> Back to Invoices
+      </a>
+      <h2 style="font-size: 1.5rem; font-weight: 800;">Generate Maintenance Bill</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Issue a dues invoice for a resident unit for society operations and amenities.
+      </p>
+    </div>
+
+    <form method="POST">
+      {% csrf_token %}
+      
+      <div class="form-group">
+        <label class="form-label">Resident / Flat Unit *</label>
+        {{ form.resident }}
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+        <div class="form-group">
+          <label class="form-label">Billing Cycle / Month *</label>
+          {{ form.month }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount ($) *</label>
+          {{ form.amount }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Payment Due Date *</label>
+        {{ form.due_date }}
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+        <a href="{% url 'maintenance_list' %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-file-invoice"></i> Issue Invoice
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
