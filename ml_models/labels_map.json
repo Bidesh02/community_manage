@@ -1,23 +1,65 @@
 {
   "2": {
+    "type": "RESIDENT",
     "id": 2,
     "name": "Vikram Rathore",
     "role": "Security Gate Officer / Facility Staff",
     "flat": "Security Gatehouse A",
-    "vehicle": "N/A"
+    "block": "Perimeter Station",
+    "vehicle": "No Vehicle Registered"
   },
   "3": {
+    "type": "RESIDENT",
     "id": 3,
     "name": "John Doe",
     "role": "Resident Member",
     "flat": "A-402",
+    "block": "Emerald Tower",
     "vehicle": "KA-01-MJ-4521"
   },
   "4": {
+    "type": "RESIDENT",
     "id": 4,
     "name": "Sarah Connor",
     "role": "Resident Member",
     "flat": "B-204",
+    "block": "Sapphire Tower",
     "vehicle": "DL-04-CA-8890"
+  },
+  "6": {
+    "type": "RESIDENT",
+    "id": 6,
+    "name": "Bidesh Das Adhikari",
+    "role": "Society Admin / Committee Board",
+    "flat": "B-202",
+    "block": "1",
+    "vehicle": "No Vehicle Registered"
+  },
+  "7": {
+    "type": "RESIDENT",
+    "id": 7,
+    "name": "Boss Edith",
+    "role": "Resident Member",
+    "flat": "B203",
+    "block": "2",
+    "vehicle": "No Vehicle Registered"
+  },
+  "20": {
+    "type": "RESIDENT",
+    "id": 20,
+    "name": "boss",
+    "role": "Resident Member",
+    "flat": "B-208",
+    "block": "",
+    "vehicle": "No Vehicle Registered"
+  },
+  "100015": {
+    "type": "DELIVERY",
+    "id": 15,
+    "name": "Ramesh Kumar",
+    "role": "Delivery (Amazon Delivery)",
+    "flat": "A-402",
+    "block": "",
+    "vehicle": "Walk-in"
   }
 }

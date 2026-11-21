@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, SocietyNotice, ComplaintTicket, TicketComment, MaintenanceBill, VisitorLog, BiometricGateLog
+from .models import (
+    User, SocietyNotice, ComplaintTicket, TicketComment, MaintenanceBill,
+    VisitorLog, BiometricGateLog, CommunityMessage, FundCampaign, FundContribution
+)
 
 
 @admin.register(User)
@@ -58,3 +61,32 @@ class BiometricGateLogAdmin(admin.ModelAdmin):
     list_display = ('recognized_name', 'matched_role', 'confidence_score', 'gate_name', 'timestamp', 'access_granted')
     list_filter = ('matched_role', 'access_granted', 'gate_name', 'timestamp')
     search_fields = ('recognized_name', 'notes')
+
+
+@admin.register(CommunityMessage)
+class CommunityMessageAdmin(admin.ModelAdmin):
+    list_display = ('sender_display_name', 'message', 'created_at')
+    search_fields = ('sender__username', 'sender__first_name', 'sender__last_name', 'message')
+    list_filter = ('created_at',)
+
+
+class FundContributionInline(admin.TabularInline):
+    model = FundContribution
+    extra = 0
+    readonly_fields = ('contributor', 'amount', 'payment_method', 'transaction_id', 'created_at')
+
+
+@admin.register(FundCampaign)
+class FundCampaignAdmin(admin.ModelAdmin):
+    list_display = ('title', 'category', 'target_amount', 'total_collected', 'progress_percentage', 'status', 'is_featured', 'end_date')
+    list_filter = ('category', 'status', 'is_featured')
+    search_fields = ('title', 'description')
+    inlines = [FundContributionInline]
+
+
+@admin.register(FundContribution)
+class FundContributionAdmin(admin.ModelAdmin):
+    list_display = ('transaction_id', 'campaign', 'display_contributor_name', 'amount', 'payment_method', 'created_at')
+    list_filter = ('campaign', 'is_anonymous', 'created_at')
+    search_fields = ('transaction_id', 'contributor__username', 'note')
+

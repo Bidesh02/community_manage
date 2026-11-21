@@ -25,18 +25,13 @@
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
         <div class="form-group">
-          <label class="form-label">Billing Cycle / Month *</label>
-          {{ form.month }}
-        </div>
-        <div class="form-group">
-          <label class="form-label">Amount ($) *</label>
+          <label class="form-label">Amount (₹) *</label>
           {{ form.amount }}
         </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Payment Due Date *</label>
-        {{ form.due_date }}
+        <div class="form-group">
+          <label class="form-label">Payment Due Date *</label>
+          {{ form.due_date }}
+        </div>
       </div>
 
       <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">

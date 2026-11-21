@@ -8,9 +8,9 @@
   <div class="kpi-card glass-panel">
     <div class="kpi-header">
       <span class="kpi-title">Total Invoiced</span>
-      <div class="kpi-icon-box kpi-icon-purple"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+      <div class="kpi-icon-box kpi-icon-purple"><i class="fa-solid fa-indian-rupee-sign"></i></div>
     </div>
-    <div class="kpi-value">${{ total_amount }}</div>
+    <div class="kpi-value">₹{{ total_amount }}</div>
     <div class="kpi-subtext">All billing cycles</div>
   </div>
 
@@ -19,7 +19,7 @@
       <span class="kpi-title">Collected / Cleared</span>
       <div class="kpi-icon-box kpi-icon-emerald"><i class="fa-solid fa-circle-check"></i></div>
     </div>
-    <div class="kpi-value" style="color: var(--accent-emerald);">${{ paid_amount }}</div>
+    <div class="kpi-value" style="color: var(--accent-emerald);">₹{{ paid_amount }}</div>
     <div class="kpi-subtext">Settled payments</div>
   </div>
 
@@ -28,7 +28,7 @@
       <span class="kpi-title">Pending Outstanding</span>
       <div class="kpi-icon-box kpi-icon-rose"><i class="fa-solid fa-clock"></i></div>
     </div>
-    <div class="kpi-value" style="color: var(--accent-amber);">${{ pending_amount }}</div>
+    <div class="kpi-value" style="color: var(--accent-amber);">₹{{ pending_amount }}</div>
     <div class="kpi-subtext">Awaiting payment</div>
   </div>
 </div>
@@ -68,7 +68,6 @@
         <tr>
           <th>Invoice #</th>
           <th>Resident / Flat</th>
-          <th>Billing Month</th>
           <th>Amount</th>
           <th>Due Date</th>
           <th>Status</th>
@@ -84,8 +83,7 @@
             <strong>{{ b.resident.get_full_name|default:b.resident.username }}</strong>
             <div style="font-size: 0.75rem; color: var(--accent-cyan);">Unit {{ b.resident.flat_number|default:"N/A" }}</div>
           </td>
-          <td><strong>{{ b.month }}</strong></td>
-          <td><strong style="font-size: 1.05rem; font-family: 'JetBrains Mono', monospace;">${{ b.amount }}</strong></td>
+          <td><strong style="font-size: 1.05rem; font-family: 'JetBrains Mono', monospace;">₹{{ b.amount }}</strong></td>
           <td style="color: var(--text-dim); font-size: 0.85rem;">{{ b.due_date|date:"M d, Y" }}</td>
           <td>
             <span class="badge {% if b.status == 'PAID' %}badge-resolved{% elif b.status == 'OVERDUE' %}badge-urgent{% else %}badge-open{% endif %}">
@@ -104,23 +102,43 @@
           </td>
           <td>
             {% if b.status != 'PAID' %}
-              <form method="POST" action="{% url 'maintenance_pay' b.id %}" style="display: inline;">
-                {% csrf_token %}
-                <input type="hidden" name="payment_method" value="Instant UPI / Card Portal">
-                <button type="submit" class="btn btn-emerald btn-sm" onclick="return confirm('Simulate instant settlement of ${{ b.amount }} for {{ b.month }}?')">
-                  <i class="fa-solid fa-credit-card"></i> Pay Now
-                </button>
-              </form>
+              <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span class="badge badge-urgent" style="background: rgba(244, 63, 94, 0.18); color: var(--accent-rose); border: 1px solid rgba(244, 63, 94, 0.4); font-size: 0.8rem; font-weight: 700; padding: 5px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;">
+                  <i class="fa-solid fa-circle-xmark"></i> Not Paid
+                </span>
+                {% if user == b.resident or user.is_resident_role %}
+                <form method="POST" action="{% url 'maintenance_pay' b.id %}" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="payment_method" value="Instant UPI / Card Portal">
+                  <button type="submit" class="btn btn-emerald btn-sm" onclick="return confirm('Simulate instant settlement of ₹{{ b.amount }} for invoice {{ b.bill_number }}?')">
+                    <i class="fa-solid fa-credit-card"></i> Pay Now
+                  </button>
+                </form>
+                {% elif user.is_admin_role %}
+                <form method="POST" action="{% url 'maintenance_pay' b.id %}" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="payment_method" value="Cash / Cheque (Desk)">
+                  <button type="submit" class="btn btn-secondary btn-sm" onclick="return confirm('Mark invoice {{ b.bill_number }} as settled for {{ b.resident.get_full_name|default:b.resident.username }}?')">
+                    <i class="fa-solid fa-check"></i> Mark Paid
+                  </button>
+                </form>
+                {% endif %}
+              </div>
             {% else %}
-              <button type="button" class="btn btn-secondary btn-sm" onclick="alert('Receipt: Invoice {{ b.bill_number }} settled via {{ b.payment_method }}. TXN: {{ b.transaction_id }}')">
-                <i class="fa-solid fa-print"></i> Receipt
-              </button>
+              <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span class="badge badge-resolved" style="background: rgba(16, 185, 129, 0.18); color: var(--accent-emerald); border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.8rem; font-weight: 700; padding: 5px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;">
+                  <i class="fa-solid fa-circle-check"></i> Paid
+                </span>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="alert('Receipt: Invoice {{ b.bill_number }} settled via {{ b.payment_method }}. TXN: {{ b.transaction_id }}')">
+                  <i class="fa-solid fa-print"></i> Receipt
+                </button>
+              </div>
             {% endif %}
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="8" style="text-align: center; color: var(--text-dim); padding: 36px 0;">
+          <td colspan="7" style="text-align: center; color: var(--text-dim); padding: 36px 0;">
             No maintenance records found.
           </td>
         </tr>

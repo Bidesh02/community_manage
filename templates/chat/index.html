@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}Community Chat | Emerald Heights Residency{% endblock %}
+{% block page_title %}Community Chat{% endblock %}
+
+{% block content %}
+<div class="glass-panel" style="padding: 16px 20px; margin-bottom: 24px;">
+  <!-- Chat Box Container -->
+  <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid var(--border-glass); border-radius: var(--radius-md); overflow: hidden; display: flex; flex-direction: column; height: calc(100vh - 210px); min-height: 540px;">
+    
+    <!-- Messages Scrollable Body -->
+    <div id="chatMessagesBox" style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+      {% for msg in chat_messages %}
+        {% if msg.sender == user %}
+          <!-- Outgoing Message (Me) -->
+          <div class="chat-msg chat-msg-out" data-msg-id="{{ msg.id }}" style="align-self: flex-end; max-width: 72%;">
+            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 3px;">
+              <span style="font-size: 0.72rem; color: var(--text-dim);">{{ msg.created_at|date:"h:i A" }}</span>
+              <span style="font-size: 0.75rem; font-weight: 700; color: #a855f7;">You ({{ msg.sender_display_name }})</span>
+            </div>
+            <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(139, 92, 246, 0.9) 100%); color: #ffffff; padding: 12px 16px; border-radius: 16px 16px 2px 16px; font-size: 0.92rem; line-height: 1.45; word-wrap: break-word; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);">
+              {{ msg.message }}
+            </div>
+          </div>
+        {% else %}
+          <!-- Incoming Message (Other) -->
+          <div class="chat-msg chat-msg-in" data-msg-id="{{ msg.id }}" style="align-self: flex-start; max-width: 72%;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
+              <span style="font-size: 0.78rem; font-weight: 700; color: var(--accent-cyan);">
+                <i class="fa-solid fa-user" style="font-size: 0.7rem; margin-right: 3px;"></i> {{ msg.sender_display_name }}
+              </span>
+              <span style="font-size: 0.72rem; color: var(--text-dim);">{{ msg.created_at|date:"h:i A" }}</span>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-bright); padding: 12px 16px; border-radius: 16px 16px 16px 2px; font-size: 0.92rem; line-height: 1.45; word-wrap: break-word;">
+              {{ msg.message }}
+            </div>
+          </div>
+        {% endif %}
+      {% empty %}
+        <div id="chatEmptyState" style="text-align: center; margin: auto; padding: 40px 20px; color: var(--text-dim);">
+          <div style="font-size: 2.2rem; margin-bottom: 10px; color: #38bdf8;">
+            <i class="fa-solid fa-comments"></i>
+          </div>
+          <div style="font-size: 1.05rem; font-weight: 700; color: #ffffff;">Welcome to the Community Lounge!</div>
+          <div style="font-size: 0.85rem; margin-top: 4px;">Be the first to say hello to your neighbors, security, and society team.</div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Message Input Bar -->
+    <div style="padding: 16px 20px; background: rgba(10, 15, 30, 0.95); border-top: 1px solid var(--border-glass);">
+      <form id="chatForm" onsubmit="sendChatMessage(event)" style="display: flex; gap: 12px; align-items: center;">
+        {% csrf_token %}
+        <input 
+          type="text" 
+          id="chatInputMessage" 
+          name="message" 
+          class="form-input" 
+          placeholder="Type your message to the community... (Press Enter to send)" 
+          autocomplete="off" 
+          maxlength="1500"
+          style="flex: 1; height: 46px; font-size: 0.92rem; background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.15);"
+          required
+        >
+        <button type="submit" id="chatSendBtn" class="btn btn-primary" style="height: 46px; padding: 0 22px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+          <span>Send</span>
+          <i class="fa-solid fa-paper-plane" style="font-size: 0.85rem;"></i>
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  let lastMessageId = 0;
+  const messagesBox = document.getElementById('chatMessagesBox');
+  const chatForm = document.getElementById('chatForm');
+  const chatInput = document.getElementById('chatInputMessage');
+  const sendBtn = document.getElementById('chatSendBtn');
+
+  // Discover highest message ID rendered on page load
+  document.querySelectorAll('.chat-msg').forEach(el => {
+    const id = parseInt(el.getAttribute('data-msg-id'), 10);
+    if (id > lastMessageId) lastMessageId = id;
+  });
+
+  function scrollChatToBottom() {
+    if (messagesBox) {
+      messagesBox.scrollTop = messagesBox.scrollHeight;
+    }
+  }
+
+  // Initial scroll to bottom
+  scrollChatToBottom();
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function appendMessageToUI(msg, isMe) {
+    const emptyState = document.getElementById('chatEmptyState');
+    if (emptyState) emptyState.remove();
+
+    if (document.querySelector(`.chat-msg[data-msg-id="${msg.id}"]`)) {
+      return; // Already present
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = `chat-msg ${isMe ? 'chat-msg-out' : 'chat-msg-in'}`;
+    wrapper.setAttribute('data-msg-id', msg.id);
+
+    if (isMe) {
+      wrapper.style.cssText = 'align-self: flex-end; max-width: 72%; animation: fadeIn 0.2s ease;';
+      wrapper.innerHTML = `
+        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 3px;">
+          <span style="font-size: 0.72rem; color: var(--text-dim);">${escapeHtml(msg.created_at)}</span>
+          <span style="font-size: 0.75rem; font-weight: 700; color: #a855f7;">You (${escapeHtml(msg.sender_name)})</span>
+        </div>
+        <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(139, 92, 246, 0.9) 100%); color: #ffffff; padding: 12px 16px; border-radius: 16px 16px 2px 16px; font-size: 0.92rem; line-height: 1.45; word-wrap: break-word; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);">
+          ${escapeHtml(msg.message)}
+        </div>
+      `;
+    } else {
+      wrapper.style.cssText = 'align-self: flex-start; max-width: 72%; animation: fadeIn 0.2s ease;';
+      wrapper.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
+          <span style="font-size: 0.78rem; font-weight: 700; color: var(--accent-cyan);">
+            <i class="fa-solid fa-user" style="font-size: 0.7rem; margin-right: 3px;"></i> ${escapeHtml(msg.sender_name)}
+          </span>
+          <span style="font-size: 0.72rem; color: var(--text-dim);">${escapeHtml(msg.created_at)}</span>
+        </div>
+        <div style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-bright); padding: 12px 16px; border-radius: 16px 16px 16px 2px; font-size: 0.92rem; line-height: 1.45; word-wrap: break-word;">
+          ${escapeHtml(msg.message)}
+        </div>
+      `;
+    }
+
+    messagesBox.appendChild(wrapper);
+    if (msg.id > lastMessageId) lastMessageId = msg.id;
+    scrollChatToBottom();
+  }
+
+  // Send message via AJAX
+  async function sendChatMessage(e) {
+    e.preventDefault();
+    const text = chatInput.value.trim();
+    if (!text) return;
+
+    chatInput.value = '';
+    sendBtn.disabled = true;
+
+    try {
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      const response = await fetch('/api/chat/messages/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify({ message: text }),
+      });
+
+      const data = await response.json();
+      if (data.success && data.message) {
+        appendMessageToUI(data.message, true);
+      } else {
+        alert(data.message || 'Failed to send message.');
+      }
+    } catch (err) {
+      console.error('Error sending message:', err);
+    } finally {
+      sendBtn.disabled = false;
+      chatInput.focus();
+    }
+  }
+
+  // Polling for live messages from other users every 3 seconds
+  async function pollNewMessages() {
+    try {
+      const response = await fetch(`/api/chat/messages/?since_id=${lastMessageId}`);
+      if (!response.ok) return;
+      const data = await response.json();
+      if (data.success && data.messages && data.messages.length > 0) {
+        data.messages.forEach(m => {
+          appendMessageToUI(m, m.is_me);
+        });
+      }
+    } catch (err) {
+      console.error('Polling error:', err);
+    }
+  }
+
+  // Poll every 3 seconds
+  setInterval(pollNewMessages, 3000);
+</script>
+{% endblock %}

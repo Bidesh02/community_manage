@@ -1,5 +1,7 @@
 import uuid
+from decimal import Decimal
 from django.db import models
+from django.db.models import Sum
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.utils import timezone
@@ -15,12 +17,30 @@ class User(AbstractUser):
     phone_number = models.CharField(max_length=20, blank=True)
     flat_number = models.CharField(max_length=20, blank=True, help_text="e.g. A-402")
     block_tower = models.CharField(max_length=50, blank=True, help_text="e.g. Tower 1 / Emerald Block")
+    family_members_count = models.PositiveIntegerField(
+        default=1,
+        blank=True,
+        null=True,
+        help_text="Total number of family members residing in this unit"
+    )
+    family_details = models.TextField(
+        blank=True,
+        default='',
+        help_text="Family members description with names and ages (e.g. Jane Doe - Age 34, Tommy Doe - Age 8)"
+    )
+    lives_here = models.BooleanField(
+        default=True,
+        help_text="Specifies whether staff/resident lives on premises"
+    )
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     face_photo = models.ImageField(upload_to='face_profiles/', blank=True, null=True, help_text="Reference face photo for gate recognition")
     face_encoding = models.TextField(blank=True, null=True, help_text="Serialized facial feature descriptor")
     vehicle_number = models.CharField(max_length=30, blank=True, help_text="e.g. KA-01-MJ-4521")
     emergency_contact = models.CharField(max_length=50, blank=True)
     is_verified_resident = models.BooleanField(default=True)
+    google_id = models.CharField(max_length=150, blank=True, null=True, help_text="Google OAuth UID/Sub")
+    google_avatar_url = models.URLField(max_length=500, blank=True, null=True)
+    is_google_verified = models.BooleanField(default=False)
 
     @property
     def is_admin_role(self):
@@ -136,7 +156,7 @@ class MaintenanceBill(models.Model):
     )
     bill_number = models.CharField(max_length=40, unique=True, editable=False)
     resident = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bills')
-    month = models.CharField(max_length=30, help_text="e.g. October 2026")
+    month = models.CharField(max_length=30, blank=True, default='', help_text="e.g. October 2026")
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     due_date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
@@ -154,7 +174,7 @@ class MaintenanceBill(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.bill_number} - {self.resident.username} - {self.month} (${self.amount})"
+        return f"{self.bill_number} - {self.resident.username} - {self.month} (₹{self.amount})"
 
 
 class VisitorLog(models.Model):
@@ -197,6 +217,7 @@ class VisitorLog(models.Model):
 
 class BiometricGateLog(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    flat_number = models.CharField(max_length=20, blank=True, default='', help_text="Destination Unit / Flat Number")
     recognized_name = models.CharField(max_length=120)
     matched_role = models.CharField(max_length=30)
     confidence_score = models.FloatField(help_text="Confidence percentage 0-100%")
@@ -209,5 +230,139 @@ class BiometricGateLog(models.Model):
     class Meta:
         ordering = ['-timestamp']
 
+    @property
+    def display_flat_number(self):
+        if self.flat_number and self.flat_number.strip():
+            return self.flat_number.strip()
+        if self.user and self.user.flat_number:
+            return self.user.flat_number.strip()
+        if self.notes and 'Unit ' in self.notes:
+            try:
+                part = self.notes.split('Unit ')[1].split('.')[0].strip()
+                if part:
+                    return part
+            except Exception:
+                pass
+        return "Gatehouse / General"
+
+    def save(self, *args, **kwargs):
+        if not self.flat_number and self.user and self.user.flat_number:
+            self.flat_number = self.user.flat_number
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"Biometric: {self.recognized_name} ({self.confidence_score:.1f}%) at {self.timestamp.strftime('%H:%M:%S')}"
+        return f"Biometric: Flat {self.display_flat_number} - {self.recognized_name} ({self.confidence_score:.1f}%) at {self.timestamp.strftime('%H:%M:%S')}"
+
+
+class CommunityMessage(models.Model):
+    """
+    Public community chat for Residents, Security Staff, and Admins.
+    Privacy Protection: Only the sender's name and message are shared.
+    No private data (no flat number, phone, email, or family info) is exposed.
+    """
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='community_messages')
+    message = models.TextField(max_length=1500)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    @property
+    def sender_display_name(self):
+        full_name = self.sender.get_full_name()
+        return full_name.strip() if full_name and full_name.strip() else self.sender.username
+
+    def __str__(self):
+        return f"{self.sender_display_name}: {self.message[:35]}"
+
+
+class FundCampaign(models.Model):
+    CATEGORY_CHOICES = (
+        ('EVENT', 'Festival & Community Event'),
+        ('CHARITY', 'Charity & Donation Drive'),
+        ('AMENITY', 'Society Improvement Project'),
+        ('EMERGENCY', 'Emergency & Relief Aid'),
+    )
+    STATUS_CHOICES = (
+        ('ACTIVE', 'Active / Collecting Funds'),
+        ('COMPLETED', 'Target Reached'),
+        ('CLOSED', 'Closed'),
+    )
+
+    title = models.CharField(max_length=200, help_text="e.g. Diwali & Cultural Night Celebration")
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='EVENT')
+    description = models.TextField(help_text="Purpose of the funds, budget breakdown, and event details")
+    target_amount = models.DecimalField(max_digits=10, decimal_places=2, help_text="Funding target in ₹")
+    minimum_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('500.00'), help_text="Minimum contribution required per resident (₹)")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_campaigns')
+    end_date = models.DateField(blank=True, null=True, help_text="Campaign deadline or event date")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE')
+    is_featured = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-is_featured', '-created_at']
+
+    def __str__(self):
+        return f"{self.title} ({self.get_category_display()})"
+
+    @property
+    def total_collected(self):
+        return self.contributions.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+
+    @property
+    def progress_percentage(self):
+        if not self.target_amount or self.target_amount <= Decimal('0.00'):
+            return 100
+        pct = int((self.total_collected / self.target_amount) * 100)
+        return min(pct, 100)
+
+    @property
+    def donor_count(self):
+        return self.contributions.count()
+
+    @property
+    def is_fully_funded(self):
+        return self.total_collected >= self.target_amount
+
+    @property
+    def organizer_name(self):
+        if self.created_by:
+            name = self.created_by.get_full_name()
+            return name.strip() if name and name.strip() else self.created_by.username
+        return "Society Committee Board"
+
+    @property
+    def recent_donations(self):
+        return self.contributions.select_related('contributor').all()[:4]
+
+    def user_donation_total(self, user):
+        if not user or not user.is_authenticated:
+            return Decimal('0.00')
+        return self.contributions.filter(contributor=user).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+
+
+class FundContribution(models.Model):
+    campaign = models.ForeignKey(FundCampaign, on_delete=models.CASCADE, related_name='contributions')
+    contributor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='fund_contributions')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=60, default='Instant UPI / Card')
+    transaction_id = models.CharField(max_length=100, unique=True, editable=False)
+    note = models.CharField(max_length=300, blank=True, default='', help_text="Optional wishing message or note")
+    is_anonymous = models.BooleanField(default=False, help_text="Hide my name from public contributor list")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"₹{self.amount} for {self.campaign.title} by {self.display_contributor_name}"
+
+    @property
+    def display_contributor_name(self):
+        if self.is_anonymous:
+            return "Anonymous Resident"
+        name = self.contributor.get_full_name()
+        return name.strip() if name and name.strip() else self.contributor.username
+
+

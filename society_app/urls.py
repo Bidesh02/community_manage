@@ -7,13 +7,21 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('register/', views.register_view, name='register'),
+    path('auth/google/verify/', views.google_verify_view, name='google_verify'),
+    path('auth/google/disconnect/', views.google_disconnect_view, name='google_disconnect'),
     path('profile/', views.profile_view, name='profile'),
+    path('profile/<int:pk>/', views.resident_profile_view, name='resident_profile'),
+    path('residents/', views.resident_list_view, name='resident_list'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
 
     # Notices
     path('notices/', views.notice_list_view, name='notice_list'),
     path('notices/create/', views.notice_create_view, name='notice_create'),
     path('notices/<int:pk>/delete/', views.notice_delete_view, name='notice_delete'),
+
+    # Community Chat (Privacy Protected)
+    path('chat/', views.community_chat_view, name='community_chat'),
+    path('api/chat/messages/', views.api_chat_messages, name='api_chat_messages'),
 
     # Tickets / Complaints
     path('tickets/', views.ticket_list_view, name='ticket_list'),
@@ -26,6 +34,12 @@ urlpatterns = [
     path('maintenance/', views.maintenance_list_view, name='maintenance_list'),
     path('maintenance/<int:pk>/pay/', views.maintenance_pay_view, name='maintenance_pay'),
     path('maintenance/generate/', views.maintenance_generate_view, name='maintenance_generate'),
+
+    # Community Funds & Event Donations
+    path('funds/', views.funds_list_view, name='funds_list'),
+    path('funds/create/', views.fund_create_view, name='fund_create'),
+    path('funds/<int:pk>/', views.fund_detail_view, name='fund_detail'),
+    path('funds/<int:pk>/contribute/', views.fund_contribute_view, name='fund_contribute'),
 
     # Visitors
     path('visitors/', views.visitor_list_view, name='visitor_list'),
@@ -41,4 +55,6 @@ urlpatterns = [
     # REST APIs
     path('api/face-recognize/', views.api_face_recognize, name='api_face_recognize'),
     path('api/quick-stats/', views.api_quick_stats, name='api_quick_stats'),
+    path('api/check-flat/', views.api_check_flat, name='api_check_flat'),
+    path('api/flat-biometrics/', views.api_flat_biometrics, name='api_flat_biometrics'),
 ]

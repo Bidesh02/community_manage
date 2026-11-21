@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Visitor Passes{% endblock %}
+
+{% block content %}
+<div class="glass-panel" style="padding: 26px; margin-bottom: 24px;">
+  <!-- Top Navigation & Action Bar: strictly two clickable options (Today's Passes & Previous Passes) -->
+  <div style="display: flex; gap: 12px; border-bottom: 1px solid var(--border-glass); padding-bottom: 16px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+    <!-- Two Clickable Pass Views -->
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+      <!-- Clickable 1: Today's Passes -->
+      <a href="{% url 'visitor_list' %}?time_filter=today{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search %}&q={{ search }}{% endif %}"
+         class="btn {% if time_filter == 'today' %}btn-primary{% else %}btn-secondary{% endif %}"
+         style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700; height: 38px;">
+        <i class="fa-solid fa-calendar-day" style="color: var(--accent-cyan);"></i>
+        Today's Passes
+        <span class="badge" style="background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); font-weight: 800; font-size: 0.78rem; padding: 2px 8px; margin-left: 2px;">
+          {{ today_passes_count }}
+        </span>
+      </a>
+
+      <!-- Clickable 2: Previous Passes -->
+      <a href="{% url 'visitor_list' %}?time_filter=previous{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search %}&q={{ search }}{% endif %}"
+         class="btn {% if time_filter == 'previous' %}btn-primary{% else %}btn-secondary{% endif %}"
+         style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700; height: 38px;">
+        <i class="fa-solid fa-clock-rotate-left" style="color: #a855f7;"></i>
+        Previous Passes
+        <span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; font-weight: 800; font-size: 0.78rem; padding: 2px 8px; margin-left: 2px;">
+          {{ previous_passes_count }}
+        </span>
+      </a>
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+      <a href="{% url 'face_terminal' %}" class="btn btn-cyan" style="height: 38px; display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+        <i class="fa-solid fa-camera"></i> Face Gate Scanner
+      </a>
+      {% if user.is_admin_role or user.is_staff_role %}
+      <a href="{% url 'visitor_checkin' %}" class="btn btn-primary" style="height: 38px; display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+        <i class="fa-solid fa-user-plus"></i> Guard Check-In
+      </a>
+      {% endif %}
+      <a href="{% url 'visitor_preapprove' %}" class="btn btn-secondary" style="height: 38px; display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+        <i class="fa-solid fa-ticket"></i> Pre-Approve Pass
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter & Search Bar -->
+  <form method="GET" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; padding: 14px 18px; background: rgba(255, 255, 255, 0.02); border-radius: var(--radius-md); border: 1px solid var(--border-glass); align-items: center;">
+    <input type="hidden" name="time_filter" value="{{ time_filter|default:'today' }}">
+    <div style="flex: 1; min-width: 220px;">
+      <input type="text" name="q" value="{{ search|default:'' }}" class="form-input" placeholder="Search visitor name, flat, pass code, or vehicle..." style="height: 38px;">
+    </div>
+    <div style="width: 180px;">
+      <select name="status" class="form-select" onchange="this.form.submit()" style="height: 38px;">
+        <option value="">All Statuses</option>
+        <option value="INSIDE" {% if status_filter == 'INSIDE' %}selected{% endif %}>Inside Premises</option>
+        <option value="CHECKED_OUT" {% if status_filter == 'CHECKED_OUT' %}selected{% endif %}>Checked Out</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-secondary btn-sm" style="height: 38px; padding: 0 14px;"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+    {% if search or status_filter %}
+    <a href="{% url 'visitor_list' %}?time_filter={{ time_filter|default:'today' }}" class="btn btn-secondary btn-sm" style="height: 38px; display: inline-flex; align-items: center;" title="Clear search"><i class="fa-solid fa-xmark"></i></a>
+    {% endif %}
+  </form>
+
+  <!-- Visitors Table -->
+  <div class="table-responsive">
+    <table class="glass-table">
+      <thead>
+        <tr>
+          <th>Pass Code</th>
+          <th>Visitor Name</th>
+          <th>Phone</th>
+          <th>Purpose</th>
+          <th>Target Unit</th>
+          <th>Host Resident</th>
+          <th>Vehicle</th>
+          <th>Entry Mode</th>
+          <th>Status</th>
+          <th>Timestamps</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in page_obj %}
+        <tr>
+          <td><span class="badge-code" style="color: var(--accent-emerald);">{{ v.pass_code }}</span></td>
+          <td><strong>{{ v.visitor_name }}</strong></td>
+          <td>{{ v.phone_number }}</td>
+          <td>{{ v.purpose }}</td>
+          <td><strong style="color: var(--accent-cyan);">{{ v.flat_number }}</strong></td>
+          <td>
+            {% if v.visiting_resident %}
+              {{ v.visiting_resident.get_full_name|default:v.visiting_resident.username }}
+            {% else %}
+              <span style="color: var(--text-dim);">General / Facility</span>
+            {% endif %}
+          </td>
+          <td>{{ v.vehicle_number|default:"Walk-in" }}</td>
+          <td><span class="badge-code">{{ v.get_entry_type_display }}</span></td>
+          <td>
+            <span class="badge {% if v.status == 'INSIDE' %}badge-open{% elif v.status == 'CHECKED_OUT' %}badge-resolved{% else %}badge-urgent{% endif %}">
+              {{ v.get_status_display }}
+            </span>
+          </td>
+          <td>
+            <div style="font-size: 0.8rem; color: var(--text-dim);">In: {{ v.entry_time|date:"M d, H:i" }}</div>
+            {% if v.exit_time %}
+            <div style="font-size: 0.75rem; color: var(--accent-emerald);">Out: {{ v.exit_time|date:"H:i" }}</div>
+            {% endif %}
+          </td>
+          <td>
+            {% if v.status == 'INSIDE' %}
+              {% if user.is_admin_role or user.is_staff_role %}
+              <form method="POST" action="{% url 'visitor_checkout' v.id %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary btn-sm" title="Log exit time">
+                  <i class="fa-solid fa-arrow-right-from-bracket"></i> Check-Out
+                </button>
+              </form>
+              {% else %}
+              <span class="badge badge-open">Active</span>
+              {% endif %}
+            {% else %}
+              <span style="color: var(--text-dim); font-size: 0.78rem;">Closed</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="11" style="text-align: center; color: var(--text-dim); padding: 36px 0;">
+            {% if time_filter == 'previous' %}
+              No previous visitor passes found.
+            {% else %}
+              No visitor passes issued for today yet.
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="pagination-container">
+    <div style="font-size: 0.82rem; color: var(--text-dim);">
+      Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </div>
+    <div class="pagination-links">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if time_filter %}&time_filter={{ time_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search %}&q={{ search }}{% endif %}" class="btn btn-secondary btn-sm">&larr; Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if time_filter %}&time_filter={{ time_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search %}&q={{ search }}{% endif %}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

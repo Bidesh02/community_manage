@@ -1,71 +1,243 @@
 {% extends 'base.html' %}
 
+{% block title %}Biometric Access Directory | AegisGate{% endblock %}
 {% block page_title %}Biometric Gate Logs & Security Audit{% endblock %}
 
 {% block content %}
-<div class="glass-panel" style="padding: 28px;">
-  <div class="section-header">
-    <div>
-      <h3 class="section-title">
-        <i class="fa-solid fa-fingerprint" style="color: var(--accent-cyan);"></i>
-        Biometric Access Audit Trail
-      </h3>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">
-        Historical timeline of OpenCV facial recognition gate clearances and access attempts
-      </p>
+<style>
+  .btn-flat-trigger {
+    background: rgba(6, 182, 212, 0.12);
+    border: 1px solid rgba(6, 182, 212, 0.35);
+    border-radius: 8px;
+    padding: 7px 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #ffffff;
+  }
+  .btn-flat-trigger:hover {
+    background: rgba(6, 182, 212, 0.25);
+    border-color: rgba(6, 182, 212, 0.65);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(6, 182, 212, 0.28);
+  }
+  .bio-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.88);
+    backdrop-filter: blur(14px);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .bio-modal-card {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.96) 0%, rgba(15, 23, 42, 0.98) 100%);
+    border: 1px solid rgba(6, 182, 212, 0.45);
+    border-radius: 20px;
+    max-width: 860px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 35px rgba(6, 182, 212, 0.25);
+    position: relative;
+    padding: 28px;
+  }
+</style>
+
+<!-- Top Metrics -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px;">
+  <div class="glass-panel" style="padding: 18px 22px; display: flex; align-items: center; gap: 16px;">
+    <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+      <i class="fa-solid fa-door-open"></i>
     </div>
-    <div style="display: flex; gap: 10px;">
-      <a href="{% url 'face_terminal' %}" class="btn btn-cyan btn-sm">
-        <i class="fa-solid fa-camera"></i> Live Scanner
-      </a>
-      <a href="{% url 'retrain_face_model' %}" class="btn btn-secondary btn-sm">
-        <i class="fa-solid fa-arrows-rotate"></i> Retrain Model
-      </a>
+    <div>
+      <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">Unique Rooms</div>
+      <div style="font-size: 1.55rem; font-weight: 800; color: #ffffff;">{{ unique_rooms_count }} Units</div>
     </div>
   </div>
 
+  <div class="glass-panel" style="padding: 18px 22px; display: flex; align-items: center; gap: 16px;">
+    <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+      <i class="fa-solid fa-circle-check"></i>
+    </div>
+    <div>
+      <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">Granted Today</div>
+      <div style="font-size: 1.55rem; font-weight: 800; color: var(--accent-emerald);">{{ granted_today }}</div>
+    </div>
+  </div>
+
+  <div class="glass-panel" style="padding: 18px 22px; display: flex; align-items: center; gap: 16px;">
+    <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+      <i class="fa-solid fa-shield-xmark"></i>
+    </div>
+    <div>
+      <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">Denied Today</div>
+      <div style="font-size: 1.55rem; font-weight: 800; color: var(--accent-rose);">{{ denied_today }}</div>
+    </div>
+  </div>
+
+  <div class="glass-panel" style="padding: 18px 22px; display: flex; align-items: center; gap: 16px;">
+    <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(99, 102, 241, 0.15); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+      <i class="fa-solid fa-camera"></i>
+    </div>
+    <div>
+      <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700;">Scans Today</div>
+      <div style="font-size: 1.55rem; font-weight: 800; color: #ffffff;">{{ total_today }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="glass-panel" style="padding: 28px;">
+  <div class="section-header" style="flex-wrap: wrap; gap: 16px; margin-bottom: 22px;">
+    <div>
+      <h3 class="section-title">
+        <i class="fa-solid fa-fingerprint" style="color: var(--accent-cyan);"></i>
+        {% if is_elevated %}Biometric Access Directory (Unique Room Units){% else %}My Personal Biometric Records{% endif %}
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">
+        Unique room numbers with registered household head biometrics and family headcount.
+        {% if is_elevated %}<strong style="color: var(--accent-cyan);">Click any Room / Flat No. to inspect the room head biometrics, face portrait, and family members with their ages.</strong>{% endif %}
+      </p>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <a href="{% url 'face_terminal' %}" class="btn btn-cyan btn-sm">
+        <i class="fa-solid fa-camera"></i> Live Scanner Terminal
+      </a>
+      {% if is_elevated %}
+      <a href="{% url 'retrain_face_model' %}" class="btn btn-secondary btn-sm" title="Re-scan photos and rebuild LBPH face descriptor XML">
+        <i class="fa-solid fa-arrows-rotate"></i> Retrain Model
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Search & Filter Bar -->
+  <form method="GET" style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+    <div style="flex: 1; min-width: 240px; position: relative;">
+      <input type="text" name="q" value="{{ search_query }}" class="form-input" placeholder="Search by Room / Flat No., resident name, or block..." style="padding-left: 38px; font-size: 0.88rem;">
+      <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 0.85rem;"></i>
+    </div>
+    
+    <div style="display: flex; gap: 8px;">
+      <select name="status" class="form-select" style="min-width: 140px; font-size: 0.88rem;" onchange="this.form.submit()">
+        <option value="" {% if not status_filter %}selected{% endif %}>All Results</option>
+        <option value="granted" {% if status_filter == 'granted' %}selected{% endif %}>✓ Granted Only</option>
+        <option value="denied" {% if status_filter == 'denied' %}selected{% endif %}>✗ Denied Only</option>
+        <option value="enrolled" {% if status_filter == 'enrolled' %}selected{% endif %}>Face Enrolled Only</option>
+      </select>
+      
+      <button type="submit" class="btn btn-secondary btn-sm" style="padding: 0 16px;">
+        <i class="fa-solid fa-filter"></i> Filter
+      </button>
+      
+      {% if search_query or status_filter %}
+      <a href="{% url 'biometric_logs' %}" class="btn btn-secondary btn-sm" style="color: var(--accent-rose);" title="Clear Filters">
+        <i class="fa-solid fa-xmark"></i> Clear
+      </a>
+      {% endif %}
+    </div>
+  </form>
+
+  <!-- Unique Rooms Table -->
   <div class="table-responsive">
     <table class="glass-table">
       <thead>
         <tr>
-          <th>Log ID</th>
-          <th>Recognized Name</th>
-          <th>Matched Role</th>
-          <th>Resident Unit</th>
-          <th>Gate Location</th>
-          <th>Confidence</th>
-          <th>Access Result</th>
-          <th>Timestamp</th>
+          <th>Unique Room No</th>
+          <th>Head of Room / Resident</th>
+          <th>Family Members</th>
+          <th>Latest Clearance</th>
+          <th>Status</th>
+          <th>Total Clearances</th>
+          <th>Household Dossier</th>
         </tr>
       </thead>
       <tbody>
-        {% for log in page_obj %}
+        {% for room in page_obj %}
         <tr>
-          <td><span class="badge-code">BIO-#{{ log.id }}</span></td>
-          <td><strong>{{ log.recognized_name }}</strong></td>
           <td>
-            <span class="badge {% if log.matched_role == 'Visitor' %}badge-open{% else %}badge-progress{% endif %}">
-              {{ log.matched_role }}
-            </span>
+            <button type="button" onclick="handleFlatClick('{{ room.flat_number }}', '{{ room.latest_id|default:'' }}')" class="btn-flat-trigger" title="Inspect Room {{ room.flat_number }} biometrics and family">
+              <i class="fa-solid fa-door-open" style="color: var(--accent-cyan);"></i>
+              <span style="font-weight: 800; font-size: 0.95rem; color: #ffffff;">Room {{ room.flat_number }}</span>
+              {% if is_elevated %}<i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.72rem; color: var(--accent-cyan); margin-left: 4px;"></i>{% endif %}
+            </button>
+            {% if room.block_tower %}
+            <div style="font-size: 0.74rem; color: var(--text-dim); margin-top: 4px; padding-left: 4px;">{{ room.block_tower }}</div>
+            {% endif %}
           </td>
-          <td>{{ log.user.flat_number|default:"Gate Review" }}</td>
-          <td>{{ log.gate_name }}</td>
-          <td><span class="badge-code">{{ log.confidence_score|floatformat:1 }}%</span></td>
+
           <td>
-            <span class="badge {% if log.access_granted %}badge-resolved{% else %}badge-urgent{% endif %}">
-              {% if log.access_granted %}
-                <i class="fa-solid fa-check"></i> GRANTED
+            <div style="display: flex; align-items: center; gap: 10px;">
+              {% if room.face_photo_url %}
+              <img src="{{ room.face_photo_url }}" alt="Face" style="width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid var(--accent-cyan); object-fit: cover;">
               {% else %}
-                <i class="fa-solid fa-xmark"></i> DENIED
+              <div style="width: 34px; height: 34px; border-radius: 8px; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--accent-cyan);">
+                {{ room.head_name|slice:":1"|upper }}
+              </div>
               {% endif %}
+              <div>
+                <strong style="color: #ffffff; font-size: 0.92rem;">{{ room.head_name }}</strong>
+                <div style="font-size: 0.7rem; color: {% if room.has_face_photo %}var(--accent-emerald){% else %}var(--text-dim){% endif %};">
+                  {% if room.has_face_photo %}<i class="fa-solid fa-circle-check"></i> Face Enrolled{% else %}No Face Pass{% endif %}
+                </div>
+              </div>
+            </div>
+          </td>
+
+          <td>
+            <span class="badge badge-progress" style="font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-people-roof" style="color: var(--accent-emerald);"></i>
+              {{ room.family_count }} {{ room.family_count|pluralize:"Member,Members" }}
             </span>
           </td>
-          <td style="color: var(--text-dim); font-size: 0.82rem;">{{ log.timestamp|date:"M d, Y - H:i:s" }}</td>
+
+          <td>
+            {% if room.latest_log %}
+            <div>
+              <div style="font-size: 0.84rem; color: #ffffff; font-weight: 600;">{{ room.latest_gate }}</div>
+              <div style="font-size: 0.75rem; color: var(--text-dim);">{{ room.latest_timestamp|date:"M d, Y • H:i" }}</div>
+            </div>
+            {% else %}
+            <span style="color: var(--text-dim); font-size: 0.82rem;">No clearances yet</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if room.latest_log %}
+              <span class="badge {% if room.latest_granted %}badge-resolved{% else %}badge-urgent{% endif %}">
+                {% if room.latest_granted %}GRANTED{% else %}DENIED{% endif %}
+              </span>
+              <div style="margin-top: 3px;">
+                <span class="badge-code" style="font-size: 0.72rem;">{{ room.latest_confidence|floatformat:1 }}%</span>
+              </div>
+            {% else %}
+              <span class="badge" style="background: rgba(255,255,255,0.06); color: var(--text-dim);">STANDBY</span>
+            {% endif %}
+          </td>
+
+          <td>
+            <span class="badge-code" style="color: var(--accent-cyan);">{{ room.total_scans }} Clearances</span>
+          </td>
+
+          <td>
+            {% if is_elevated %}
+            <button type="button" onclick="handleFlatClick('{{ room.flat_number }}', '{{ room.latest_id|default:'' }}')" class="btn btn-sm btn-cyan" style="padding: 6px 12px; font-size: 0.78rem;">
+              <i class="fa-solid fa-people-roof"></i> Inspect Dossier
+            </button>
+            {% else %}
+            <span style="color: var(--text-dim); font-size: 0.78rem;"><i class="fa-solid fa-lock"></i> Protected</span>
+            {% endif %}
+          </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="8" style="text-align: center; color: var(--text-dim); padding: 32px 0;">
-            No biometric scans recorded yet. Use the Face Gate Scanner to record real-time entries!
+          <td colspan="7" style="text-align: center; color: var(--text-dim); padding: 48px 0;">
+            <div style="font-size: 2.2rem; margin-bottom: 10px;"><i class="fa-solid fa-door-closed"></i></div>
+            <div style="font-size: 1rem; font-weight: 600; color: #ffffff;">No registered rooms found</div>
           </td>
         </tr>
         {% endfor %}
@@ -73,20 +245,213 @@
     </table>
   </div>
 
+  <!-- Pagination -->
   {% if page_obj.has_other_pages %}
-  <div class="pagination-container">
+  <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
     <div style="font-size: 0.82rem; color: var(--text-dim);">
-      Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} total records)
     </div>
-    <div class="pagination-links">
+    <div style="display: flex; gap: 8px;">
       {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-sm">&larr; Previous</a>
+      <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-secondary btn-sm">&larr; Previous</a>
       {% endif %}
+      <span class="btn btn-secondary btn-sm" style="pointer-events: none; background: rgba(255,255,255,0.08);">Page {{ page_obj.number }}</span>
       {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+      <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-secondary btn-sm">Next &rarr;</a>
       {% endif %}
     </div>
   </div>
   {% endif %}
 </div>
+
+<!-- Room Biometric & Family Dossier Modal -->
+<div id="flatBiometricModal" class="bio-modal">
+  <div class="bio-modal-card">
+    <button type="button" onclick="closeFlatBiometricModal()" style="position: absolute; right: 20px; top: 20px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: 34px; height: 34px; border-radius: 50%; cursor: pointer;">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+      <div style="width: 46px; height: 46px; border-radius: 12px; background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); display: flex; align-items: center; justify-content: center; font-size: 1.35rem;">
+        <i class="fa-solid fa-door-open"></i>
+      </div>
+      <div>
+        <h3 style="font-size: 1.4rem; font-weight: 800; color: #ffffff; margin: 0;">Room / Flat <span id="modalFlatNumBadge" style="color: var(--accent-cyan);"></span></h3>
+        <div style="color: var(--text-dim); font-size: 0.84rem;">Head of Household Biometrics & Family Dossier</div>
+      </div>
+    </div>
+
+    <div id="modalLoadingState" style="text-align: center; padding: 48px 0; display: none;">
+      <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.2rem; color: var(--accent-cyan); margin-bottom: 14px;"></i>
+      <div style="color: var(--text-bright); font-weight: 600;">Retrieving Household Biometrics & Family Records...</div>
+    </div>
+
+    <div id="modalContentContainer">
+      <div style="display: grid; grid-template-columns: 280px 1fr; gap: 24px;">
+        <!-- Left Column: Head of Room Biometrics -->
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-md); padding: 18px; display: flex; flex-direction: column; gap: 14px;">
+          <div style="font-size: 0.74rem; font-weight: 800; text-transform: uppercase; color: var(--accent-cyan);"><i class="fa-solid fa-user-tie"></i> Head of Room</div>
+          
+          <div style="border-radius: 12px; overflow: hidden; border: 2px solid rgba(6,182,212,0.45); background: #000; text-align: center; min-height: 180px;">
+            <img id="modalHeadFacePhoto" src="" alt="Enrolled Face" style="width: 100%; height: 200px; object-fit: cover; display: none;">
+            <div id="modalNoFaceOverlay" style="display: flex; height: 180px; align-items: center; justify-content: center; flex-direction: column; color: var(--text-dim);">
+              <i class="fa-solid fa-user-slash" style="font-size: 2rem; margin-bottom: 8px;"></i>
+              <div style="font-size: 0.8rem;">No Face Portrait Registered</div>
+            </div>
+          </div>
+
+          <div>
+            <div id="modalHeadName" style="font-weight: 800; font-size: 1.1rem; color: #fff;"></div>
+            <div style="display: flex; gap: 6px; align-items: center; margin-top: 4px;">
+              <span id="modalHeadRole" class="badge badge-progress" style="font-size: 0.7rem;"></span>
+              <span id="modalGoogleVerifiedBadge" style="display: none; background: rgba(16,185,129,0.2); color: var(--accent-emerald); font-size: 0.7rem; padding: 2px 7px; border-radius: 10px; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Google</span>
+            </div>
+          </div>
+
+          <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 6px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px;">
+            <div>Username: <strong id="modalHeadUsername" style="color: #fff;"></strong></div>
+            <div>Phone: <strong id="modalHeadPhone" style="color: #fff;"></strong></div>
+            <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Email: <strong id="modalHeadEmail" style="color: #fff;"></strong></div>
+            <div>Block: <strong id="modalHeadBlock" style="color: #fff;"></strong></div>
+            <div>Vehicle: <strong id="modalHeadVehicle" style="color: #fff;"></strong></div>
+          </div>
+        </div>
+
+        <!-- Right Column: Family Details & Recent Scans -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="padding: 16px 20px; border-radius: var(--radius-md); background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <i class="fa-solid fa-people-roof" style="color: var(--accent-emerald); font-size: 1.4rem;"></i>
+              <div>
+                <div style="font-weight: 800; font-size: 1.05rem; color: #fff;"><span id="modalFamilyCountDisplay">1 Member</span> Residing in Room</div>
+                <div style="font-size: 0.78rem; color: var(--text-dim);">Official registered household census</div>
+              </div>
+            </div>
+            <span class="badge badge-resolved">Verified Unit</span>
+          </div>
+
+          <!-- Family Members Names & Ages -->
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-md); padding: 18px;">
+            <div style="font-weight: 700; font-size: 0.92rem; color: #fff; margin-bottom: 12px;"><i class="fa-solid fa-id-badge" style="color: var(--accent-emerald);"></i> Family Members & Ages</div>
+            <div id="modalFamilyMemberList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;"></div>
+            <div style="padding: 10px 14px; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); font-size: 0.82rem; color: var(--text-bright); white-space: pre-line;" id="modalFamilyRawDesc"></div>
+          </div>
+
+          <!-- Recent Biometric Clearances -->
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-md); padding: 16px;">
+            <div style="font-weight: 700; font-size: 0.88rem; color: #fff; margin-bottom: 10px;"><i class="fa-solid fa-clock-rotate-left" style="color: var(--accent-cyan);"></i> Recent Clearances</div>
+            <div id="modalRecentScansList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; margin-top: 18px;">
+      <button type="button" onclick="closeFlatBiometricModal()" class="btn btn-secondary">Close Dossier</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function closeFlatBiometricModal() {
+    document.getElementById('flatBiometricModal').style.display = 'none';
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeFlatBiometricModal(); });
+  const modalBackdrop = document.getElementById('flatBiometricModal');
+  if (modalBackdrop) modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeFlatBiometricModal(); });
+
+  async function handleFlatClick(flatNum, logId) {
+    {% if not is_elevated %}
+    alert("Society Admin privileges required to inspect household biometrics.");
+    return;
+    {% endif %}
+
+    const modal = document.getElementById('flatBiometricModal');
+    const loading = document.getElementById('modalLoadingState');
+    const content = document.getElementById('modalContentContainer');
+    document.getElementById('modalFlatNumBadge').textContent = flatNum;
+    modal.style.display = 'flex';
+    loading.style.display = 'block';
+    content.style.display = 'none';
+
+    try {
+      const resp = await fetch(`/api/flat-biometrics/?flat=${encodeURIComponent(flatNum)}&log_id=${logId || ''}`);
+      const data = await resp.json();
+      loading.style.display = 'none';
+      content.style.display = 'block';
+
+      if (!data.success || !data.head) {
+        document.getElementById('modalHeadName').textContent = 'No Resident Registered';
+        document.getElementById('modalHeadRole').textContent = 'Unassigned Room';
+        ['modalHeadUsername','modalHeadPhone','modalHeadEmail','modalHeadBlock','modalHeadVehicle'].forEach(id => document.getElementById(id).textContent = 'N/A');
+        document.getElementById('modalHeadFacePhoto').style.display = 'none';
+        document.getElementById('modalNoFaceOverlay').style.display = 'flex';
+        document.getElementById('modalFamilyCountDisplay').textContent = '0 Members';
+        document.getElementById('modalFamilyRawDesc').textContent = data.message || 'No resident data registered.';
+        document.getElementById('modalFamilyMemberList').innerHTML = '<div style="color:var(--text-dim);font-size:0.8rem;">No registered family members.</div>';
+        return;
+      }
+
+      const h = data.head;
+      document.getElementById('modalHeadName').textContent = h.full_name;
+      document.getElementById('modalHeadRole').textContent = h.role_display + ' (Head)';
+      document.getElementById('modalHeadUsername').textContent = h.username;
+      document.getElementById('modalHeadPhone').textContent = h.phone;
+      document.getElementById('modalHeadEmail').textContent = h.email;
+      document.getElementById('modalHeadBlock').textContent = h.block_tower;
+      document.getElementById('modalHeadVehicle').textContent = h.vehicle_number;
+
+      const gBadge = document.getElementById('modalGoogleVerifiedBadge');
+      if (gBadge) gBadge.style.display = h.is_google_verified ? 'inline-flex' : 'none';
+
+      const faceImg = document.getElementById('modalHeadFacePhoto');
+      const noFace = document.getElementById('modalNoFaceOverlay');
+      if (h.has_face_photo && h.face_photo_url) {
+        faceImg.src = h.face_photo_url;
+        faceImg.style.display = 'block';
+        noFace.style.display = 'none';
+      } else {
+        faceImg.style.display = 'none';
+        noFace.style.display = 'flex';
+      }
+
+      const count = h.family_members_count || 1;
+      document.getElementById('modalFamilyCountDisplay').textContent = `${count} ${count === 1 ? 'Member' : 'Members'}`;
+      document.getElementById('modalFamilyRawDesc').textContent = h.family_details;
+
+      const memberList = document.getElementById('modalFamilyMemberList');
+      memberList.innerHTML = '';
+      if (h.family_members_list && h.family_members_list.length > 0) {
+        h.family_members_list.forEach(line => {
+          const item = document.createElement('div');
+          item.style.cssText = 'padding:8px 12px;border-radius:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between;';
+          let ageMatch = line.match(/age[:\s]*(\d+)/i) || line.match(/[-–]\s*(\d+)/) || line.match(/\((\d+)\s*(?:yrs?|years?)?\)/i);
+          let ageBadge = ageMatch ? `<span class="badge-code" style="color:var(--accent-cyan);font-weight:700;">Age ${ageMatch[1]}</span>` : '';
+          item.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><i class="fa-solid fa-user" style="color:var(--accent-emerald);"></i><span style="font-weight:600;font-size:0.85rem;color:#fff;">${line}</span></div>${ageBadge}`;
+          memberList.appendChild(item);
+        });
+      } else {
+        memberList.innerHTML = `<div style="font-size:0.84rem;color:var(--text-bright);">${h.family_details}</div>`;
+      }
+
+      const scansList = document.getElementById('modalRecentScansList');
+      scansList.innerHTML = '';
+      if (data.recent_scans && data.recent_scans.length > 0) {
+        data.recent_scans.forEach(s => {
+          const sRow = document.createElement('div');
+          sRow.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-radius:6px;background:rgba(255,255,255,0.02);font-size:0.78rem;';
+          sRow.innerHTML = `<div><i class="fa-solid ${s.access_granted ? 'fa-check' : 'fa-xmark'}" style="color:${s.access_granted ? 'var(--accent-emerald)' : 'var(--accent-rose)'};margin-right:6px;"></i><span style="color:#fff;">${s.gate_name}</span></div><div style="display:flex;gap:10px;"><span class="badge-code">${s.confidence}%</span><span style="color:var(--text-dim);">${s.timestamp}</span></div>`;
+          scansList.appendChild(sRow);
+        });
+      } else {
+        scansList.innerHTML = '<div style="color:var(--text-dim);font-size:0.78rem;">No recent scans for this unit.</div>';
+      }
+    } catch (e) {
+      console.error(e);
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      alert('Error fetching room dossier.');
+    }
+  }
+</script>
 {% endblock %}

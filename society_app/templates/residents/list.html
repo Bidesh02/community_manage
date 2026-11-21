@@ -1,0 +1,420 @@
+{% extends 'base.html' %}
+
+{% block title %}Resident Families Directory | Emerald Heights Residency{% endblock %}
+{% block page_title %}Resident Families Directory{% endblock %}
+
+{% block content %}
+<div class="glass-panel" style="padding: 28px; margin-bottom: 24px;">
+  <!-- Section Header -->
+  <div class="section-header" style="flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+    <div>
+      <h3 class="section-title" style="display: flex; align-items: center; gap: 10px; font-size: 1.35rem;">
+        <i class="fa-solid fa-people-roof" style="color: #a855f7;"></i>
+        Resident Households & Families
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin: 4px 0 0 0;">
+        Official residential registry tracking household heads, registered family members, ages, and gate biometric credentials.
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+      <a href="{% url 'biometric_logs' %}" class="btn btn-secondary" title="View Biometric Clearance Logs">
+        <i class="fa-solid fa-fingerprint" style="color: var(--accent-cyan);"></i> Biometric Room Logs
+      </a>
+      <a href="{% url 'face_terminal' %}" class="btn btn-cyan" title="Launch OpenCV Gate Terminal">
+        <i class="fa-solid fa-camera"></i> Face Gate Scanner
+      </a>
+      {% if is_elevated %}
+      <a href="{% url 'register' %}" class="btn btn-primary" title="Enroll New Resident">
+        <i class="fa-solid fa-user-plus"></i> Enroll Resident
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Summary Stats Bar -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px 20px;">
+      <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.04em;">
+        <i class="fa-solid fa-house-chimney" style="color: #a855f7; margin-right: 6px;"></i> Total Households
+      </div>
+      <div style="font-size: 1.6rem; font-weight: 800; color: #ffffff; margin-top: 6px;">{{ total_families }}</div>
+      <div style="font-size: 0.76rem; color: var(--accent-emerald); margin-top: 2px;"><i class="fa-solid fa-circle-check"></i> Registered Flats</div>
+    </div>
+
+    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px 20px;">
+      <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.04em;">
+        <i class="fa-solid fa-users" style="color: var(--accent-cyan); margin-right: 6px;"></i> Family Individuals
+      </div>
+      <div style="font-size: 1.6rem; font-weight: 800; color: #ffffff; margin-top: 6px;">{{ total_individuals }}</div>
+      <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">Campus Residents</div>
+    </div>
+
+    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px 20px;">
+      <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.04em;">
+        <i class="fa-solid fa-camera" style="color: var(--accent-emerald); margin-right: 6px;"></i> Biometric Enrolled
+      </div>
+      <div style="font-size: 1.6rem; font-weight: 800; color: #ffffff; margin-top: 6px;">{{ biometric_enrolled_count }}</div>
+      <div style="font-size: 0.76rem; color: var(--accent-emerald); margin-top: 2px;">OpenCV Pass Active</div>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <form method="GET" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; padding: 16px; background: rgba(255, 255, 255, 0.02); border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+    <div style="flex: 1; min-width: 240px; position: relative;">
+      <input type="text" name="q" value="{{ search_query|default:'' }}" class="form-input" placeholder="Search flat (e.g. A-402), resident name, phone, or family member...">
+    </div>
+    {% if available_blocks %}
+    <div style="width: 200px;">
+      <select name="block" class="form-select" onchange="this.form.submit()">
+        <option value="">All Towers & Blocks</option>
+        {% for blk in available_blocks %}
+        <option value="{{ blk }}" {% if block_filter == blk %}selected{% endif %}>{{ blk }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
+    <button type="submit" class="btn btn-secondary btn-sm" style="height: 42px;">
+      <i class="fa-solid fa-magnifying-glass"></i> Search
+    </button>
+    {% if search_query or block_filter %}
+    <a href="{% url 'resident_list' %}" class="btn btn-secondary btn-sm" style="height: 42px; display: inline-flex; align-items: center;" title="Clear Search">
+      <i class="fa-solid fa-xmark"></i> Reset
+    </a>
+    {% endif %}
+  </form>
+
+  <!-- Resident Families Table -->
+  <div class="table-responsive">
+    <table class="glass-table">
+      <thead>
+        <tr>
+          <th>Flat / Room</th>
+          <th>Head of Household</th>
+          <th>Contact Info</th>
+          <th>Family Members & Ages</th>
+          <th>Biometric Pass</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for res in residents %}
+        <tr style="transition: background 0.2s;">
+          <!-- Flat / Unit -->
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button type="button" onclick="handleFlatClick('{{ res.flat_number|default:res.username }}')" class="btn-clean" style="cursor: pointer; background: none; border: none; padding: 0; text-align: left;" title="Click to view Room Head & Family Biometrics">
+                <span class="badge-code" style="font-size: 0.95rem; font-weight: 800; color: var(--accent-cyan); background: rgba(6, 182, 212, 0.12); border: 1px solid rgba(6, 182, 212, 0.3); padding: 4px 10px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+                  <i class="fa-solid fa-door-open"></i> {{ res.flat_number|default:"Unit N/A" }}
+                </span>
+              </button>
+            </div>
+            <div style="font-size: 0.74rem; color: var(--text-dim); margin-top: 4px;">
+              <i class="fa-solid fa-building"></i> {{ res.block_tower|default:"Emerald Block" }}
+            </div>
+          </td>
+
+          <!-- Head of Household -->
+          <td>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 42px; height: 42px; border-radius: 50%; overflow: hidden; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.12);">
+                {% if res.avatar %}
+                  <img src="{{ res.avatar.url }}" alt="{{ res.username }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% elif res.face_photo %}
+                  <img src="{{ res.face_photo.url }}" alt="{{ res.username }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                  <span style="font-weight: 800; font-size: 1rem; color: #a855f7;">{{ res.username|make_list|first|upper }}</span>
+                {% endif %}
+              </div>
+              <div>
+                <div style="font-weight: 700; color: #ffffff; font-size: 0.94rem;">
+                  {{ res.get_full_name|default:res.username }}
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px; margin-top: 3px;">
+                  <span style="font-size: 0.72rem; color: var(--text-dim);">@{{ res.username }}</span>
+                  {% if res.is_google_verified %}
+                  <span style="background: rgba(16, 185, 129, 0.18); color: var(--accent-emerald); font-size: 0.68rem; padding: 1px 6px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;">
+                    <i class="fa-solid fa-circle-check"></i> Google
+                  </span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </td>
+
+          <!-- Contact Info -->
+          <td>
+            <div style="display: flex; flex-direction: column; gap: 3px; font-size: 0.82rem;">
+              <div style="color: var(--text-bright);">
+                <i class="fa-solid fa-phone" style="color: var(--accent-cyan); font-size: 0.72rem; margin-right: 4px;"></i>
+                {{ res.phone_number|default:"No phone" }}
+              </div>
+              <div style="color: var(--text-dim); max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <i class="fa-solid fa-envelope" style="color: var(--text-muted); font-size: 0.72rem; margin-right: 4px;"></i>
+                {{ res.email|default:"No email" }}
+              </div>
+            </div>
+          </td>
+
+          <!-- Family Members & Ages -->
+          <td style="max-width: 320px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <span class="badge badge-progress" style="font-size: 0.75rem; font-weight: 700;">
+                <i class="fa-solid fa-people-roof"></i> {{ res.family_members_count|default:1 }} {% if res.family_members_count == 1 %}Member{% else %}Members{% endif %}
+              </span>
+            </div>
+            {% if res.family_details %}
+            <div style="font-size: 0.8rem; color: var(--text-bright); line-height: 1.4; background: rgba(0, 0, 0, 0.25); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.05);">
+              {{ res.family_details }}
+            </div>
+            {% else %}
+            <div style="font-size: 0.78rem; color: var(--text-dim); font-style: italic;">
+              Registered as single resident head.
+            </div>
+            {% endif %}
+          </td>
+
+          <!-- Biometric Face Status -->
+          <td>
+            {% if res.face_photo %}
+            <span style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); border: 1px solid rgba(16, 185, 129, 0.35); font-size: 0.76rem; padding: 4px 10px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-camera"></i> Face Enrolled
+            </span>
+            {% else %}
+            <span style="background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.35); font-size: 0.76rem; padding: 4px 10px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-triangle-exclamation"></i> Photo Pending
+            </span>
+            {% endif %}
+          </td>
+
+          <!-- Actions -->
+          <td style="text-align: right;">
+            <div style="display: inline-flex; gap: 8px; justify-content: flex-end;">
+              <button type="button" onclick="handleFlatClick('{{ res.flat_number|default:res.username }}')" class="btn btn-secondary btn-sm" title="View Head Biometrics & Family Dossier">
+                <i class="fa-solid fa-id-card" style="color: var(--accent-cyan);"></i> Biometrics
+              </button>
+              {% if user.is_admin_role %}
+              <a href="{% url 'resident_profile' res.pk %}" class="btn btn-secondary btn-sm" title="Edit Resident Profile">
+                <i class="fa-solid fa-pen-to-square"></i> Edit
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 48px 20px;">
+            <div style="font-size: 2rem; color: var(--text-dim); margin-bottom: 12px;">
+              <i class="fa-solid fa-users-slash"></i>
+            </div>
+            <div style="color: var(--text-bright); font-weight: 700; font-size: 1.05rem;">No Resident Families Found</div>
+            <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+              {% if search_query or block_filter %}
+              No residents match your search criteria. <a href="{% url 'resident_list' %}" style="color: var(--accent-cyan);">Clear filter</a>
+              {% else %}
+              No residents enrolled yet.
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- FLAT BIOMETRIC & FAMILY DOSSIER MODAL                         -->
+<!-- ============================================================== -->
+<div id="flatBiometricModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+  <div class="glass-panel" style="width: 100%; max-width: 760px; max-height: 90vh; overflow-y: auto; padding: 28px; border: 1px solid rgba(6,182,212,0.4); box-shadow: 0 25px 60px rgba(0,0,0,0.6);">
+    <!-- Modal Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px; margin-bottom: 20px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span class="badge-code" id="modalFlatNumBadge" style="font-size: 1.1rem; color: var(--accent-cyan); font-weight: 800; padding: 3px 12px; border-radius: 8px;"></span>
+          <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #fff;">Household Biometric Dossier</h3>
+        </div>
+        <div style="color: var(--text-dim); font-size: 0.84rem; margin-top: 3px;">Head of Household Biometrics & Registered Family Members</div>
+      </div>
+      <button type="button" onclick="closeFlatBiometricModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <!-- Loading State -->
+    <div id="modalLoadingState" style="text-align: center; padding: 48px 0; display: none;">
+      <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.2rem; color: var(--accent-cyan); margin-bottom: 14px;"></i>
+      <div style="color: var(--text-bright); font-weight: 600;">Retrieving Household Biometrics & Family Records...</div>
+    </div>
+
+    <!-- Modal Content -->
+    <div id="modalContentContainer">
+      <div style="display: grid; grid-template-columns: 280px 1fr; gap: 24px;">
+        <!-- Left: Head of Room Biometrics -->
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-md); padding: 18px; display: flex; flex-direction: column; gap: 14px;">
+          <div style="font-size: 0.74rem; font-weight: 800; text-transform: uppercase; color: var(--accent-cyan);">
+            <i class="fa-solid fa-user-tie"></i> Head of Room
+          </div>
+
+          <div style="border-radius: 12px; overflow: hidden; border: 2px solid rgba(6,182,212,0.45); background: #000; text-align: center; min-height: 180px;">
+            <img id="modalHeadFacePhoto" src="" alt="Enrolled Face" style="width: 100%; height: 200px; object-fit: cover; display: none;">
+            <div id="modalNoFaceOverlay" style="display: flex; height: 180px; align-items: center; justify-content: center; flex-direction: column; color: var(--text-dim);">
+              <i class="fa-solid fa-user-slash" style="font-size: 2rem; margin-bottom: 8px;"></i>
+              <div style="font-size: 0.8rem;">No Face Portrait Registered</div>
+            </div>
+          </div>
+
+          <div>
+            <div id="modalHeadName" style="font-weight: 800; font-size: 1.1rem; color: #fff;"></div>
+            <div style="display: flex; gap: 6px; align-items: center; margin-top: 4px;">
+              <span id="modalHeadRole" class="badge badge-progress" style="font-size: 0.7rem;"></span>
+              <span id="modalGoogleVerifiedBadge" style="display: none; background: rgba(16,185,129,0.2); color: var(--accent-emerald); font-size: 0.7rem; padding: 2px 7px; border-radius: 10px; font-weight: 600;">
+                <i class="fa-solid fa-circle-check"></i> Google
+              </span>
+            </div>
+          </div>
+
+          <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 6px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px;">
+            <div>Username: <strong id="modalHeadUsername" style="color: #fff;"></strong></div>
+            <div>Phone: <strong id="modalHeadPhone" style="color: #fff;"></strong></div>
+            <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Email: <strong id="modalHeadEmail" style="color: #fff;"></strong></div>
+            <div>Tower: <strong id="modalHeadBlock" style="color: #fff;"></strong></div>
+            <div>Vehicle: <strong id="modalHeadVehicle" style="color: #fff;"></strong></div>
+          </div>
+        </div>
+
+        <!-- Right: Family Details & Household Members -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="padding: 16px 20px; border-radius: var(--radius-md); background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <i class="fa-solid fa-people-roof" style="color: var(--accent-emerald); font-size: 1.4rem;"></i>
+              <div>
+                <div style="font-weight: 800; font-size: 1.05rem; color: #fff;"><span id="modalFamilyCountDisplay">1 Member</span> Residing</div>
+                <div style="font-size: 0.78rem; color: var(--text-dim);">Official registered household census</div>
+              </div>
+            </div>
+            <span class="badge badge-resolved">Verified Unit</span>
+          </div>
+
+          <!-- Family Members Names & Ages -->
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-md); padding: 18px;">
+            <div style="font-weight: 700; font-size: 0.92rem; color: #fff; margin-bottom: 12px;">
+              <i class="fa-solid fa-id-badge" style="color: var(--accent-emerald);"></i> Family Members & Ages
+            </div>
+            <div id="modalFamilyMemberList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;"></div>
+            <div style="padding: 10px 14px; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); font-size: 0.82rem; color: var(--text-bright); white-space: pre-line;" id="modalFamilyRawDesc"></div>
+          </div>
+
+          <!-- Recent Biometric Clearances -->
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-md); padding: 16px;">
+            <div style="font-weight: 700; font-size: 0.88rem; color: #fff; margin-bottom: 10px;">
+              <i class="fa-solid fa-clock-rotate-left" style="color: var(--accent-cyan);"></i> Recent Clearances
+            </div>
+            <div id="modalRecentScansList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; margin-top: 18px;">
+      <button type="button" onclick="closeFlatBiometricModal()" class="btn btn-secondary">Close Dossier</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function closeFlatBiometricModal() {
+    document.getElementById('flatBiometricModal').style.display = 'none';
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeFlatBiometricModal(); });
+  const modalBackdrop = document.getElementById('flatBiometricModal');
+  if (modalBackdrop) modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeFlatBiometricModal(); });
+
+  async function handleFlatClick(flatNum) {
+    const modal = document.getElementById('flatBiometricModal');
+    const loading = document.getElementById('modalLoadingState');
+    const content = document.getElementById('modalContentContainer');
+    document.getElementById('modalFlatNumBadge').textContent = flatNum;
+    modal.style.display = 'flex';
+    loading.style.display = 'block';
+    content.style.display = 'none';
+
+    try {
+      const resp = await fetch(`/api/flat-biometrics/?flat=${encodeURIComponent(flatNum)}`);
+      const data = await resp.json();
+      loading.style.display = 'none';
+      content.style.display = 'block';
+
+      if (!data.success || !data.head) {
+        document.getElementById('modalHeadName').textContent = 'No Resident Registered';
+        document.getElementById('modalHeadRole').textContent = 'Unassigned Room';
+        ['modalHeadUsername','modalHeadPhone','modalHeadEmail','modalHeadBlock','modalHeadVehicle'].forEach(id => document.getElementById(id).textContent = 'N/A');
+        document.getElementById('modalHeadFacePhoto').style.display = 'none';
+        document.getElementById('modalNoFaceOverlay').style.display = 'flex';
+        document.getElementById('modalFamilyCountDisplay').textContent = '0 Members';
+        document.getElementById('modalFamilyRawDesc').textContent = data.message || 'No resident data registered.';
+        document.getElementById('modalFamilyMemberList').innerHTML = '<div style="color:var(--text-dim);font-size:0.8rem;">No registered family members.</div>';
+        return;
+      }
+
+      const h = data.head;
+      document.getElementById('modalHeadName').textContent = h.full_name;
+      document.getElementById('modalHeadRole').textContent = h.role_display + ' (Head)';
+      document.getElementById('modalHeadUsername').textContent = h.username;
+      document.getElementById('modalHeadPhone').textContent = h.phone;
+      document.getElementById('modalHeadEmail').textContent = h.email;
+      document.getElementById('modalHeadBlock').textContent = h.block_tower;
+      document.getElementById('modalHeadVehicle').textContent = h.vehicle_number;
+
+      const gBadge = document.getElementById('modalGoogleVerifiedBadge');
+      if (gBadge) gBadge.style.display = h.is_google_verified ? 'inline-flex' : 'none';
+
+      const faceImg = document.getElementById('modalHeadFacePhoto');
+      const noFace = document.getElementById('modalNoFaceOverlay');
+      if (h.has_face_photo && h.face_photo_url) {
+        faceImg.src = h.face_photo_url;
+        faceImg.style.display = 'block';
+        noFace.style.display = 'none';
+      } else {
+        faceImg.style.display = 'none';
+        noFace.style.display = 'flex';
+      }
+
+      const count = h.family_members_count || 1;
+      document.getElementById('modalFamilyCountDisplay').textContent = `${count} ${count === 1 ? 'Member' : 'Members'}`;
+      document.getElementById('modalFamilyRawDesc').textContent = h.family_details;
+
+      const memberList = document.getElementById('modalFamilyMemberList');
+      memberList.innerHTML = '';
+      if (data.family_members && data.family_members.length > 0) {
+        data.family_members.forEach(m => {
+          const row = document.createElement('div');
+          row.style.cssText = 'padding: 8px 12px; background: rgba(255,255,255,0.04); border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid var(--accent-emerald);';
+          row.innerHTML = `<span style="font-weight: 600; color: #fff;">${m.name}</span><span class="badge" style="background: rgba(6,182,212,0.18); color: var(--accent-cyan); font-size: 0.75rem;">Age ${m.age}</span>`;
+          memberList.appendChild(row);
+        });
+      } else {
+        memberList.innerHTML = '<div style="color: var(--text-dim); font-size: 0.8rem; font-style: italic;">Detailed member breakdown extracted from description above.</div>';
+      }
+
+      const scanList = document.getElementById('modalRecentScansList');
+      scanList.innerHTML = '';
+      if (data.recent_logs && data.recent_logs.length > 0) {
+        data.recent_logs.forEach(l => {
+          const item = document.createElement('div');
+          item.style.cssText = 'padding: 6px 10px; background: rgba(0,0,0,0.25); border-radius: 6px; font-size: 0.78rem; display: flex; justify-content: space-between; align-items: center;';
+          item.innerHTML = `<span style="color: var(--text-bright);">${l.timestamp}</span><span style="color: var(--accent-emerald); font-weight: 600;">Confidence ${l.confidence}%</span>`;
+          scanList.appendChild(item);
+        });
+      } else {
+        scanList.innerHTML = '<div style="color: var(--text-dim); font-size: 0.78rem;">No recent biometric access scans recorded.</div>';
+      }
+    } catch (err) {
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      alert('Failed to retrieve flat biometrics: ' + err);
+    }
+  }
+</script>
+{% endblock %}

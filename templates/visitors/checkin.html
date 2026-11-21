@@ -18,6 +18,22 @@
     <form method="POST">
       {% csrf_token %}
 
+      {% if form.errors %}
+      <div class="alert alert-error" style="margin-bottom: 20px; padding: 14px; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--accent-rose); border-radius: var(--radius-md);">
+        <strong>Please correct the following errors:</strong>
+        <ul style="margin: 8px 0 0 18px; font-size: 0.88rem;">
+          {% for field in form %}
+            {% for error in field.errors %}
+              <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+          {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
         <div class="form-group">
           <label class="form-label">Visitor Full Name *</label>

@@ -4,6 +4,7 @@
 {% block page_title %}OpenCV Real-Time Face Gate Scanner{% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <div class="terminal-container">
   <!-- Left Side: Interactive Scanner Viewport & Controls -->
   <div style="display: flex; flex-direction: column; gap: 20px;">
@@ -78,6 +79,55 @@
           Don't have a webcam active right now? Upload any photo of a registered resident (or visitor) to test OpenCV instant recognition!
         </small>
       </div>
+
+      <!-- Delivery Agent & Visitor Fast-Pass Clearance Card -->
+      <div style="margin-top: 22px; padding: 20px; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: var(--radius-md);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-truck-fast" style="color: var(--accent-cyan); font-size: 1.15rem;"></i>
+            <strong style="font-size: 0.95rem;">Delivery Agent Fast-Pass (Upload Face & Lift Gate)</strong>
+          </div>
+          <span class="badge badge-progress"><i class="fa-solid fa-bolt"></i> Instant Entry</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 14px;">
+          Delivery agent or courier at the gate? Upload or snap their face photo and destination unit to verify biometric clearance and lift the motorized gate!
+        </p>
+
+        <form id="deliveryFaceForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label" style="font-size: 0.75rem;">Delivery Agency / Partner</label>
+            <select id="delCompany" class="form-select" style="padding: 8px 12px; font-size: 0.85rem;">
+              <option value="Amazon Delivery">Amazon</option>
+              <option value="Swiggy / Zomato Food">Swiggy / Zomato</option>
+              <option value="FedEx / DHL Courier">FedEx / Courier</option>
+              <option value="Flipkart Delivery">Flipkart</option>
+              <option value="Uber / Cab Pickup">Uber / Cab</option>
+              <option value="Contractor / Repair">Contractor / Repair</option>
+              <option value="Guest / Visitor">Guest / Visitor</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" style="font-size: 0.75rem;">Destination Unit / Flat *</label>
+            <input type="text" id="delFlat" class="form-input" placeholder="e.g. A-402 or Unit 204" style="padding: 8px 12px; font-size: 0.85rem;" required>
+          </div>
+          <div>
+            <label class="form-label" style="font-size: 0.75rem;">Agent Name (Optional)</label>
+            <input type="text" id="delName" class="form-input" placeholder="e.g. Alex Courier" style="padding: 8px 12px; font-size: 0.85rem;">
+          </div>
+          <div>
+            <label class="form-label" style="font-size: 0.75rem;">Delivery Face Photo *</label>
+            <input type="file" id="delPhoto" accept="image/*" class="form-file" style="padding: 6px; font-size: 0.8rem;">
+          </div>
+          <div style="grid-column: span 2; display: flex; gap: 10px; margin-top: 4px;">
+            <button type="submit" class="btn btn-cyan btn-sm" style="flex: 1;">
+              <i class="fa-solid fa-shield-check"></i> Verify Face & Lift Gate
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnSnapDeliveryFace" title="Snap current frame from active gate camera" style="display: none;">
+              <i class="fa-solid fa-camera"></i> Use Cam Snapshot
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <!-- Live Gate Biometric Access Feed Table -->
@@ -96,7 +146,8 @@
             <tr>
               <th>Recognized Person</th>
               <th>Role</th>
-              <th>Unit</th>
+              <th>Building</th>
+              <th>Room / Flat</th>
               <th>Confidence</th>
               <th>Access</th>
               <th>Time</th>
@@ -107,6 +158,7 @@
             <tr>
               <td><strong>{{ log.recognized_name }}</strong></td>
               <td><span class="badge {% if log.access_granted %}badge-resolved{% else %}badge-urgent{% endif %}">{{ log.matched_role }}</span></td>
+              <td style="color: var(--accent-cyan);">{{ log.user.block_tower|default:"—" }}</td>
               <td>{{ log.user.flat_number|default:"Gate Review" }}</td>
               <td><span class="badge-code">{{ log.confidence_score|floatformat:1 }}%</span></td>
               <td>
@@ -118,7 +170,7 @@
             </tr>
             {% empty %}
             <tr>
-              <td colspan="6" style="text-align: center; color: var(--text-dim);">No biometric logs recorded yet.</td>
+              <td colspan="7" style="text-align: center; color: var(--text-dim);">No biometric logs recorded yet.</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -202,12 +254,20 @@
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px; background: rgba(0, 0, 0, 0.2); border-radius: var(--radius-md); margin-bottom: 16px;">
         <div>
-          <span style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase;">Flat Unit</span>
-          <div style="font-weight: 700;" id="resultFlat">A-402</div>
+          <span style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase;">Building / Block</span>
+          <div style="font-weight: 700; color: var(--accent-cyan);" id="resultBlock">—</div>
+        </div>
+        <div>
+          <span style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase;">Room / Flat No.</span>
+          <div style="font-weight: 700;" id="resultFlat">—</div>
         </div>
         <div>
           <span style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase;">Vehicle Plate</span>
-          <div style="font-weight: 700;" id="resultVehicle">KA-01-MJ-4521</div>
+          <div style="font-weight: 700;" id="resultVehicle">—</div>
+        </div>
+        <div id="resultPassCodeContainer" style="display: none;">
+          <span style="font-size: 0.72rem; color: var(--accent-emerald); text-transform: uppercase;">Gate Pass Code</span>
+          <div style="font-weight: 800; color: var(--accent-emerald);" id="resultPassCode">—</div>
         </div>
       </div>
 
@@ -244,7 +304,7 @@
               {{ r.get_full_name|default:r.username }}
             </div>
             <div style="font-size: 0.75rem; color: var(--text-dim);">
-              {{ r.get_role_display }} • {{ r.flat_number|default:"Unit N/A" }}
+              {{ r.get_role_display }} • {{ r.block_tower|default:"N/A" }} • {{ r.flat_number|default:"Unit N/A" }}
             </div>
           </div>
           <button type="button" class="btn btn-secondary btn-sm" onclick="testResidentPhoto('{{ r.face_photo.url }}', '{{ r.get_full_name|default:r.username }}')" title="Simulate scanning this resident's face">

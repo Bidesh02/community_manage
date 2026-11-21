@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Raise Maintenance Ticket{% endblock %}
+
+{% block content %}
+<div style="max-width: 760px; margin: 0 auto;">
+  <div class="glass-panel" style="padding: 32px;">
+    <div style="margin-bottom: 24px;">
+      <a href="{% url 'ticket_list' %}" style="color: var(--text-dim); text-decoration: none; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px;">
+        <i class="fa-solid fa-arrow-left"></i> Back to Tickets
+      </a>
+      <h2 style="font-size: 1.5rem; font-weight: 800;">Log Community Service Request</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Report facility breakdowns, plumbing/electrical issues, or neighborhood concerns to the society maintenance desk.
+      </p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      
+      <div class="form-group">
+        <label class="form-label">Issue Subject *</label>
+        {{ form.title }}
+        {% if form.title.errors %}<small style="color: var(--accent-rose);">{{ form.title.errors.0 }}</small>{% endif %}
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          {{ form.category }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Urgency / Priority *</label>
+          {{ form.priority }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Detailed Description *</label>
+        {{ form.description }}
+        {% if form.description.errors %}<small style="color: var(--accent-rose);">{{ form.description.errors.0 }}</small>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Photo / Screenshot (Optional)</label>
+        {{ form.attachment }}
+        <small style="color: var(--text-dim); font-size: 0.75rem; display: block; margin-top: 4px;">
+          Attach a picture of the damage or leakage to help technicians bring the right tools.
+        </small>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+        <a href="{% url 'ticket_list' %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-paper-plane"></i> Submit Ticket
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

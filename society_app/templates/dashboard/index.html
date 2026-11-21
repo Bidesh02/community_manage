@@ -1,0 +1,393 @@
+{% extends 'base.html' %}
+
+{% block title %}AegisGate Society Manager | Emerald Heights Residency{% endblock %}
+{% block page_title %}Community Living Hub{% endblock %}
+
+{% block content %}
+<!-- Live Community Status Marquee Ticker -->
+<div class="ticker" aria-label="Live community status">
+  <div class="ticker-track" id="tickerTrack">
+    <span class="ticker-item"><svg class="i"><use href="#i-shield"/></svg>Security gates monitored</span>
+    <span class="ticker-item"><svg class="i"><use href="#i-waves"/></svg>Pool cleaned • 27°C</span>
+    <span class="ticker-item"><svg class="i"><use href="#i-dumbbell"/></svg>Trainer on duty at the Fitness Center</span>
+    <span class="ticker-item"><svg class="i"><use href="#i-racket"/></svg>Floodlights ready on the courts</span>
+    <span class="ticker-item"><svg class="i"><use href="#i-building"/></svg>Clubhouse open until 10:30 PM</span>
+    <span class="ticker-item"><svg class="i"><use href="#i-finger"/></svg>Gate face pass enrolled</span>
+    <span class="ticker-item"><svg class="i"><use href="#i-receipt"/></svg>All society dues settled</span>
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- 1. HUMAN-CENTRIC HERO WELCOME BANNER                           -->
+<!-- ============================================================== -->
+<section class="hero" id="hero">
+  <i class="blob b1"></i>
+  <i class="blob b2"></i>
+  <i class="blob b3"></i>
+  <span class="radar" aria-hidden="true"><i></i><i></i><i></i></span>
+  
+  <div>
+    <!-- Resident Status Chips -->
+    <div class="hero-chips">
+      <span class="chip ok">
+        <svg class="i"><use href="#i-building"/></svg>
+        <span>{{ user.get_role_display|upper }}</span>
+      </span>
+      {% if user.flat_number %}
+      <span class="chip">
+        <svg class="i"><use href="#i-door"/></svg>
+        <span>Unit {{ user.flat_number }}</span>
+      </span>
+      {% endif %}
+      {% if user.is_google_verified %}
+      <span class="chip ok">
+        <svg class="i"><use href="#i-check"/></svg>
+        <span>Google Verified</span>
+      </span>
+      {% endif %}
+      <span class="chip vi">
+        <i class="dot" style="background: var(--violet);"></i>
+        <span>Aura: Cosmic Violet</span>
+      </span>
+    </div>
+
+    <!-- Live Date and Digital Running Clock -->
+    <div class="hero-date">
+      <svg class="i"><use href="#i-clock"/></svg>
+      <span id="today">{{ today|date:"l, F d, Y" }}</span>
+      <span class="clock" id="clock">12:00:00 PM</span>
+    </div>
+
+    <!-- Human Greeting Headline -->
+    <h2>
+      <svg class="i hi hi-sun"><use href="#i-sun"/></svg>
+      <svg class="i hi hi-moon"><use href="#i-moon"/></svg>
+      <span class="w" style="--d:.25s"><span id="greet">{{ greeting_text }}</span>,</span>
+      <span class="w grad" style="--d:.4s">{{ user.first_name|default:user.username }}!</span>
+    </h2>
+  </div>
+
+  <!-- Primary Action Buttons -->
+  <div class="hero-actions">
+    <a href="{% url 'funds_list' %}" class="btn btn-hot">
+      <svg class="i"><use href="#i-heart"/></svg>
+      <span>Event Funds &amp; Donate</span>
+    </a>
+    <a href="{% url 'visitor_preapprove' %}" class="btn">
+      <svg class="i"><use href="#i-id"/></svg>
+      <span>Pre-Approve Guest Pass</span>
+    </a>
+    <a href="{% url 'community_chat' %}" class="btn">
+      <svg class="i"><use href="#i-chat"/></svg>
+      <span>Community Chat</span>
+    </a>
+  </div>
+</section>
+
+<!-- ============================================================== -->
+<!-- 2. INTERACTIVE 3D KPI STAT TILES                               -->
+<!-- ============================================================== -->
+<section class="stats" aria-label="Your summary">
+  {% if user.is_admin_role or user.is_staff_role %}
+  <!-- Admin / Management KPI View -->
+  <article class="stat s-violet">
+    <div class="stat-head">
+      <span class="stat-label">Resident Families</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-building"/></svg></span>
+    </div>
+    <div class="stat-val">{{ total_residents }}</div>
+    <div class="stat-foot">
+      <span>Verified Households</span>
+      <a href="{% url 'resident_list' %}" class="stat-link">Directory <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
+
+  <article class="stat s-rose">
+    <div class="stat-head">
+      <span class="stat-label">Service Requests</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-wrench"/></svg></span>
+    </div>
+    <div class="stat-val" id="ticketCount">{{ total_open_tickets }}</div>
+    <div class="stat-foot">
+      <span id="ticketSub">{{ urgent_tickets }} urgent tickets</span>
+      <a href="{% url 'ticket_list' %}" class="stat-link">Tickets <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
+
+  <article class="stat s-emerald">
+    <div class="stat-head">
+      <span class="stat-label">Society Dues</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-receipt"/></svg></span>
+    </div>
+    <div class="stat-val">₹{{ pending_dues|floatformat:2 }}</div>
+    <div class="stat-foot">
+      <span>Collected: ₹{{ collected_this_month|floatformat:0 }}</span>
+      <a href="{% url 'maintenance_list' %}" class="stat-link">Bills <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
+
+  <article class="stat s-sky">
+    <div class="stat-head">
+      <span class="stat-label">Gate Biometric Entries</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-finger"/></svg></span>
+    </div>
+    <div class="stat-val">{{ today_biometric_entries }}</div>
+    <div class="stat-foot">
+      <span>Entries Today</span>
+      <a href="{% url 'biometric_logs' %}" class="stat-link">Logs <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
+
+  <article class="stat s-amber">
+    <div class="stat-head">
+      <span class="stat-label">Community Funds</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-heart"/></svg></span>
+    </div>
+    <div class="stat-val">₹{{ total_funds_collected|floatformat:2 }}</div>
+    <div class="stat-foot">
+      <span>{{ active_funds_count }} active campaigns</span>
+      <a href="{% url 'funds_list' %}" class="stat-link">Campaigns <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
+
+  {% else %}
+  <!-- Resident Living Essentials KPI View -->
+  <article class="stat s-violet">
+    <div class="stat-head">
+      <span class="stat-label">My Residence</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-door"/></svg></span>
+    </div>
+    <div class="stat-val">{{ user.flat_number|default:"B-208" }}</div>
+    <div class="stat-foot">
+      <span>Emerald Block</span>
+      <a href="{% url 'profile' %}" class="stat-link">Profile <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
+
+  <article class="stat s-rose">
+    <div class="stat-head">
+      <span class="stat-label">My Service Requests</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-wrench"/></svg></span>
+    </div>
+    <div class="stat-val" id="ticketCount">{{ my_open_tickets_count|default:0 }}</div>
+    <div class="stat-foot">
+      <span id="ticketSub">{% if my_open_tickets_count %}{{ my_open_tickets_count }} active request{{ my_open_tickets_count|pluralize }}{% else %}All issues resolved{% endif %}</span>
+      <a href="{% url 'ticket_list' %}" class="stat-link">Tickets <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
+
+  <article class="stat s-emerald">
+    <div class="stat-head">
+      <span class="stat-label">Society Dues</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-receipt"/></svg></span>
+    </div>
+    <div class="stat-val">₹{{ my_pending_amount|default:"0.00"|floatformat:2 }}</div>
+    <div class="stat-foot">
+      <span>{% if my_pending_amount > 0 %}Due clearance pending{% else %}All settled{% endif %}</span>
+      <a href="{% url 'maintenance_list' %}" class="stat-link">Bills <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
+
+  <article class="stat s-sky">
+    <div class="stat-head">
+      <span class="stat-label">Gate Face Pass</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-finger"/></svg></span>
+    </div>
+    <div class="stat-val">
+      {% if user.face_photo %}
+      <span class="enrolled"><i class="ring"></i>ENROLLED</span>
+      {% else %}
+      <span style="color: var(--amber); font-weight: 800;">PENDING</span>
+      {% endif %}
+    </div>
+    <div class="stat-foot">
+      <span>Biometric access</span>
+      <a href="{% url 'face_terminal' %}" class="stat-link">Gate <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
+
+  <article class="stat s-amber">
+    <div class="stat-head">
+      <span class="stat-label">Community Funds</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-heart"/></svg></span>
+    </div>
+    <div class="stat-val">₹{{ my_funds_contributed|default:"0.00"|floatformat:2 }}</div>
+    <div class="stat-foot">
+      <span>My contributions</span>
+      <a href="{% url 'funds_list' %}" class="stat-link">Donate <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
+  {% endif %}
+</section>
+
+<!-- ============================================================== -->
+<!-- 3. LOWER PANELS: FACILITIES & 24/7 SECURITY DESK               -->
+<!-- ============================================================== -->
+<section class="panels">
+  <!-- Community Facilities & Amenities Panel -->
+  <div class="panel s-emerald">
+    <div class="panel-head">
+      <span class="ico"><svg class="i"><use href="#i-building"/></svg></span>
+      <div>
+        <h3>Community Facilities &amp; Amenities</h3>
+        <p>Operational timings &amp; neighborhood facilities</p>
+      </div>
+      <span class="chip ok"><i class="dot"></i>All Open Today</span>
+    </div>
+    <div class="list">
+      <div class="row s-violet">
+        <span class="ico"><svg class="i"><use href="#i-building"/></svg></span>
+        <div class="row-body">
+          <b>Clubhouse &amp; Resident Lounge</b>
+          <small>6:00 AM – 10:30 PM</small>
+          <span class="pill">Community Hub</span>
+        </div>
+      </div>
+      <div class="row s-emerald">
+        <span class="ico"><svg class="i"><use href="#i-waves"/></svg></span>
+        <div class="row-body">
+          <b>Temperature-Controlled Pool</b>
+          <small>6:00 AM – 9:00 PM</small>
+          <span class="pill">Cleaned • 27°C</span>
+        </div>
+      </div>
+      <div class="row s-sky">
+        <span class="ico"><svg class="i"><use href="#i-dumbbell"/></svg></span>
+        <div class="row-body">
+          <b>Fitness &amp; Cardio Center</b>
+          <small>24/7 Resident Access</small>
+          <span class="pill">Trainer on Duty</span>
+        </div>
+      </div>
+      <div class="row s-amber">
+        <span class="ico"><svg class="i"><use href="#i-racket"/></svg></span>
+        <div class="row-body">
+          <b>Badminton &amp; Tennis Courts</b>
+          <small>6:00 AM – 10:00 PM</small>
+          <span class="pill">Floodlights Ready</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 24/7 Security & Emergency Desk Panel -->
+  <div class="panel s-rose">
+    <div class="panel-head">
+      <span class="ico"><svg class="i"><use href="#i-phone"/></svg></span>
+      <div>
+        <h3>24/7 Security &amp; Emergency Desk</h3>
+        <p>Direct contact for resident assistance</p>
+      </div>
+    </div>
+    <div class="list">
+      <div class="row s-emerald">
+        <span class="ico"><svg class="i"><use href="#i-shield"/></svg></span>
+        <div class="row-body">
+          <b>Security Main Gate</b>
+          <small>Ext. 101</small>
+        </div>
+        <button type="button" class="copy" data-copy="+91 98765 00101">+91 98765 00101</button>
+      </div>
+      <div class="row s-violet">
+        <span class="ico"><svg class="i"><use href="#i-building"/></svg></span>
+        <div class="row-body">
+          <b>Facility &amp; Estate Office</b>
+          <small>Ext. 102</small>
+        </div>
+        <button type="button" class="copy" data-copy="+91 98765 00102">+91 98765 00102</button>
+      </div>
+      <div class="row s-rose">
+        <span class="ico"><svg class="i"><use href="#i-medic"/></svg></span>
+        <div class="row-body">
+          <b>Emergency Medical Service</b>
+          <small>Toll-free</small>
+        </div>
+        <button type="button" class="copy" data-copy="108">108</button>
+      </div>
+      <div class="row s-rose">
+        <span class="ico"><svg class="i"><use href="#i-siren"/></svg></span>
+        <div class="row-body">
+          <b>Police Control Helpline</b>
+          <small>Emergency</small>
+        </div>
+        <button type="button" class="copy" data-copy="100">100</button>
+      </div>
+    </div>
+    <p class="hint"><svg class="i"><use href="#i-phone"/></svg>Tap a number to copy it, then dial from your phone.</p>
+  </div>
+</section>
+
+<p class="foot">Emerald Heights Residency • AegisGate Core v2.4</p>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+  var reduced = false;
+  try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+
+  // Duplicate the ticker content once for infinite smooth marquee looping
+  var track = document.getElementById('tickerTrack');
+  if (track) {
+    track.innerHTML += track.innerHTML;
+  }
+
+  // Live date, clock, and greeting tick
+  function tick() {
+    var now = new Date();
+    try {
+      var todayEl = document.getElementById('today');
+      var clockEl = document.getElementById('clock');
+      var greetEl = document.getElementById('greet');
+      if (todayEl) {
+        todayEl.textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      }
+      if (clockEl) {
+        clockEl.textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+      }
+      if (greetEl) {
+        var h = now.getHours();
+        greetEl.textContent = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+      }
+    } catch (e) {}
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // 3D perspective tilt + spotlight on stat tiles (mouse only)
+  document.querySelectorAll('.stat').forEach(function(el) {
+    el.addEventListener('pointermove', function(e) {
+      if (e.pointerType !== 'mouse' || reduced) return;
+      var r = el.getBoundingClientRect();
+      var px = (e.clientX - r.left) / r.width;
+      var py = (e.clientY - r.top) / r.height;
+      el.style.setProperty('--mx', (px * 100) + '%');
+      el.style.setProperty('--my', (py * 100) + '%');
+      el.style.setProperty('--ry', ((px - 0.5) * 8).toFixed(2) + 'deg');
+      el.style.setProperty('--rx', ((0.5 - py) * 6).toFixed(2) + 'deg');
+    });
+    el.addEventListener('pointerleave', function() {
+      el.style.setProperty('--rx', '0deg');
+      el.style.setProperty('--ry', '0deg');
+    });
+  });
+
+  // Tap-to-copy phone numbers with toast notification
+  document.querySelectorAll('[data-copy]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var val = btn.getAttribute('data-copy');
+      var onSuccess = function() {
+        if (typeof toast === 'function') toast('Copied ' + val + ' to clipboard');
+      };
+      try {
+        navigator.clipboard.writeText(val).then(onSuccess, function() {
+          if (typeof toast === 'function') toast('Number: ' + val);
+        });
+      } catch (e) {
+        if (typeof toast === 'function') toast('Number: ' + val);
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}

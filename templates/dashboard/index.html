@@ -1,400 +1,393 @@
 {% extends 'base.html' %}
 
-{% block page_title %}Society Operations Hub{% endblock %}
+{% block title %}AegisGate Society Manager | Emerald Heights Residency{% endblock %}
+{% block page_title %}Community Living Hub{% endblock %}
 
 {% block content %}
-<!-- Society Banner Header -->
-<div class="glass-panel" style="padding: 28px 32px; margin-bottom: 28px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%); border-left: 4px solid var(--accent-cyan); position: relative; overflow: hidden;">
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-    <div>
-      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-        <span class="badge badge-progress">{{ user.get_role_display }} PORTAL</span>
-        <span style="color: var(--text-dim); font-size: 0.82rem;">{{ today|date:"l, F d, Y" }}</span>
-      </div>
-      <h2 style="font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em;">
-        Welcome to AegisGate, {{ user.first_name|default:user.username }}!
-      </h2>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">
-        Emerald Heights Residency • Smart Campus & Biometric Automation
-      </p>
-    </div>
-
-    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-      <a href="{% url 'face_terminal' %}" class="btn btn-cyan">
-        <i class="fa-solid fa-camera"></i> Launch Gate Scanner
-      </a>
-      {% if user.is_resident_role %}
-      <a href="{% url 'visitor_preapprove' %}" class="btn btn-secondary">
-        <i class="fa-solid fa-qrcode"></i> Pre-Approve Guest Pass
-      </a>
-      {% endif %}
-    </div>
+<!-- Live Community Status Marquee Ticker -->
+<div class="ticker" aria-label="Live community status">
+  <div class="ticker-track" id="tickerTrack">
+    <span class="ticker-item"><svg class="i"><use href="#i-shield"/></svg>Security gates monitored</span>
+    <span class="ticker-item"><svg class="i"><use href="#i-waves"/></svg>Pool cleaned • 27°C</span>
+    <span class="ticker-item"><svg class="i"><use href="#i-dumbbell"/></svg>Trainer on duty at the Fitness Center</span>
+    <span class="ticker-item"><svg class="i"><use href="#i-racket"/></svg>Floodlights ready on the courts</span>
+    <span class="ticker-item"><svg class="i"><use href="#i-building"/></svg>Clubhouse open until 10:30 PM</span>
+    <span class="ticker-item"><svg class="i"><use href="#i-finger"/></svg>Gate face pass enrolled</span>
+    <span class="ticker-item"><svg class="i"><use href="#i-receipt"/></svg>All society dues settled</span>
   </div>
 </div>
 
-<!-- KPI Metrics Grid -->
-<div class="kpi-grid">
-  {% if user.is_admin_role or user.is_staff_role %}
-  <!-- Admin KPIs -->
-  <div class="kpi-card glass-panel">
-    <div class="kpi-header">
-      <span class="kpi-title">Total Residents</span>
-      <div class="kpi-icon-box kpi-icon-purple"><i class="fa-solid fa-users"></i></div>
-    </div>
-    <div class="kpi-value">{{ total_residents }}</div>
-    <div class="kpi-subtext"><i class="fa-solid fa-building"></i> Occupied Flats</div>
-  </div>
-
-  <div class="kpi-card glass-panel">
-    <div class="kpi-header">
-      <span class="kpi-title">Open Tickets</span>
-      <div class="kpi-icon-box kpi-icon-rose"><i class="fa-solid fa-screwdriver-wrench"></i></div>
-    </div>
-    <div class="kpi-value">{{ total_open_tickets }}</div>
-    <div class="kpi-subtext">
-      {% if urgent_tickets > 0 %}
-      <span style="color: var(--accent-rose); font-weight: 700;">{{ urgent_tickets }} Urgent</span>
-      {% else %}
-      All standard priority
+<!-- ============================================================== -->
+<!-- 1. HUMAN-CENTRIC HERO WELCOME BANNER                           -->
+<!-- ============================================================== -->
+<section class="hero" id="hero">
+  <i class="blob b1"></i>
+  <i class="blob b2"></i>
+  <i class="blob b3"></i>
+  <span class="radar" aria-hidden="true"><i></i><i></i><i></i></span>
+  
+  <div>
+    <!-- Resident Status Chips -->
+    <div class="hero-chips">
+      <span class="chip ok">
+        <svg class="i"><use href="#i-building"/></svg>
+        <span>{{ user.get_role_display|upper }}</span>
+      </span>
+      {% if user.flat_number %}
+      <span class="chip">
+        <svg class="i"><use href="#i-door"/></svg>
+        <span>Unit {{ user.flat_number }}</span>
+      </span>
       {% endif %}
+      {% if user.is_google_verified %}
+      <span class="chip ok">
+        <svg class="i"><use href="#i-check"/></svg>
+        <span>Google Verified</span>
+      </span>
+      {% endif %}
+      <span class="chip vi">
+        <i class="dot" style="background: var(--violet);"></i>
+        <span>Aura: Cosmic Violet</span>
+      </span>
     </div>
+
+    <!-- Live Date and Digital Running Clock -->
+    <div class="hero-date">
+      <svg class="i"><use href="#i-clock"/></svg>
+      <span id="today">{{ today|date:"l, F d, Y" }}</span>
+      <span class="clock" id="clock">12:00:00 PM</span>
+    </div>
+
+    <!-- Human Greeting Headline -->
+    <h2>
+      <svg class="i hi hi-sun"><use href="#i-sun"/></svg>
+      <svg class="i hi hi-moon"><use href="#i-moon"/></svg>
+      <span class="w" style="--d:.25s"><span id="greet">{{ greeting_text }}</span>,</span>
+      <span class="w grad" style="--d:.4s">{{ user.first_name|default:user.username }}!</span>
+    </h2>
   </div>
 
-  <div class="kpi-card glass-panel">
-    <div class="kpi-header">
-      <span class="kpi-title">Visitors On Campus</span>
-      <div class="kpi-icon-box kpi-icon-cyan"><i class="fa-solid fa-id-badge"></i></div>
-    </div>
-    <div class="kpi-value">{{ visitors_inside }}</div>
-    <div class="kpi-subtext"><i class="fa-solid fa-clock"></i> {{ today_visitors }} entries today</div>
+  <!-- Primary Action Buttons -->
+  <div class="hero-actions">
+    <a href="{% url 'funds_list' %}" class="btn btn-hot">
+      <svg class="i"><use href="#i-heart"/></svg>
+      <span>Event Funds &amp; Donate</span>
+    </a>
+    <a href="{% url 'visitor_preapprove' %}" class="btn">
+      <svg class="i"><use href="#i-id"/></svg>
+      <span>Pre-Approve Guest Pass</span>
+    </a>
+    <a href="{% url 'community_chat' %}" class="btn">
+      <svg class="i"><use href="#i-chat"/></svg>
+      <span>Community Chat</span>
+    </a>
   </div>
+</section>
 
-  <div class="kpi-card glass-panel">
-    <div class="kpi-header">
-      <span class="kpi-title">OpenCV Face Scans</span>
-      <div class="kpi-icon-box kpi-icon-emerald"><i class="fa-solid fa-camera-viewfinder"></i></div>
+<!-- ============================================================== -->
+<!-- 2. INTERACTIVE 3D KPI STAT TILES                               -->
+<!-- ============================================================== -->
+<section class="stats" aria-label="Your summary">
+  {% if user.is_admin_role or user.is_staff_role %}
+  <!-- Admin / Management KPI View -->
+  <article class="stat s-violet">
+    <div class="stat-head">
+      <span class="stat-label">Resident Families</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-building"/></svg></span>
     </div>
-    <div class="kpi-value">{{ today_biometric_entries }}</div>
-    <div class="kpi-subtext"><i class="fa-solid fa-check-double" style="color: var(--accent-emerald);"></i> Verified Entries</div>
-  </div>
+    <div class="stat-val">{{ total_residents }}</div>
+    <div class="stat-foot">
+      <span>Verified Households</span>
+      <a href="{% url 'resident_list' %}" class="stat-link">Directory <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
 
-  <div class="kpi-card glass-panel">
-    <div class="kpi-header">
-      <span class="kpi-title">Maintenance Dues</span>
-      <div class="kpi-icon-box kpi-icon-purple"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+  <article class="stat s-rose">
+    <div class="stat-head">
+      <span class="stat-label">Service Requests</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-wrench"/></svg></span>
     </div>
-    <div class="kpi-value" style="font-size: 1.7rem;">${{ pending_dues }}</div>
-    <div class="kpi-subtext" style="color: var(--accent-emerald);"><i class="fa-solid fa-circle-check"></i> ${{ collected_this_month }} Collected</div>
-  </div>
+    <div class="stat-val" id="ticketCount">{{ total_open_tickets }}</div>
+    <div class="stat-foot">
+      <span id="ticketSub">{{ urgent_tickets }} urgent tickets</span>
+      <a href="{% url 'ticket_list' %}" class="stat-link">Tickets <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
+
+  <article class="stat s-emerald">
+    <div class="stat-head">
+      <span class="stat-label">Society Dues</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-receipt"/></svg></span>
+    </div>
+    <div class="stat-val">₹{{ pending_dues|floatformat:2 }}</div>
+    <div class="stat-foot">
+      <span>Collected: ₹{{ collected_this_month|floatformat:0 }}</span>
+      <a href="{% url 'maintenance_list' %}" class="stat-link">Bills <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
+
+  <article class="stat s-sky">
+    <div class="stat-head">
+      <span class="stat-label">Gate Biometric Entries</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-finger"/></svg></span>
+    </div>
+    <div class="stat-val">{{ today_biometric_entries }}</div>
+    <div class="stat-foot">
+      <span>Entries Today</span>
+      <a href="{% url 'biometric_logs' %}" class="stat-link">Logs <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
+
+  <article class="stat s-amber">
+    <div class="stat-head">
+      <span class="stat-label">Community Funds</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-heart"/></svg></span>
+    </div>
+    <div class="stat-val">₹{{ total_funds_collected|floatformat:2 }}</div>
+    <div class="stat-foot">
+      <span>{{ active_funds_count }} active campaigns</span>
+      <a href="{% url 'funds_list' %}" class="stat-link">Campaigns <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
 
   {% else %}
-  <!-- Resident KPIs -->
-  <div class="kpi-card glass-panel">
-    <div class="kpi-header">
-      <span class="kpi-title">My Residence</span>
-      <div class="kpi-icon-box kpi-icon-purple"><i class="fa-solid fa-door-closed"></i></div>
+  <!-- Resident Living Essentials KPI View -->
+  <article class="stat s-violet">
+    <div class="stat-head">
+      <span class="stat-label">My Residence</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-door"/></svg></span>
     </div>
-    <div class="kpi-value" style="font-size: 1.8rem;">{{ user.flat_number|default:"A-402" }}</div>
-    <div class="kpi-subtext"><i class="fa-solid fa-layer-group"></i> {{ user.block_tower|default:"Emerald Tower" }}</div>
-  </div>
+    <div class="stat-val">{{ user.flat_number|default:"B-208" }}</div>
+    <div class="stat-foot">
+      <span>Emerald Block</span>
+      <a href="{% url 'profile' %}" class="stat-link">Profile <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
 
-  <div class="kpi-card glass-panel">
-    <div class="kpi-header">
-      <span class="kpi-title">My Open Issues</span>
-      <div class="kpi-icon-box kpi-icon-rose"><i class="fa-solid fa-wrench"></i></div>
+  <article class="stat s-rose">
+    <div class="stat-head">
+      <span class="stat-label">My Service Requests</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-wrench"/></svg></span>
     </div>
-    <div class="kpi-value">{{ my_open_tickets_count }}</div>
-    <div class="kpi-subtext"><i class="fa-solid fa-clock-rotate-left"></i> In progress / open</div>
-  </div>
+    <div class="stat-val" id="ticketCount">{{ my_open_tickets_count|default:0 }}</div>
+    <div class="stat-foot">
+      <span id="ticketSub">{% if my_open_tickets_count %}{{ my_open_tickets_count }} active request{{ my_open_tickets_count|pluralize }}{% else %}All issues resolved{% endif %}</span>
+      <a href="{% url 'ticket_list' %}" class="stat-link">Tickets <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
 
-  <div class="kpi-card glass-panel">
-    <div class="kpi-header">
-      <span class="kpi-title">Maintenance Dues</span>
-      <div class="kpi-icon-box kpi-icon-cyan"><i class="fa-solid fa-credit-card"></i></div>
+  <article class="stat s-emerald">
+    <div class="stat-head">
+      <span class="stat-label">Society Dues</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-receipt"/></svg></span>
     </div>
-    <div class="kpi-value" style="font-size: 1.8rem;">${{ my_pending_amount }}</div>
-    <div class="kpi-subtext">
-      {% if my_pending_amount > 0 %}
-      <span style="color: var(--accent-rose); font-weight: 600;">Payment Pending</span>
-      {% else %}
-      <span style="color: var(--accent-emerald); font-weight: 600;">All Dues Cleared</span>
-      {% endif %}
+    <div class="stat-val">₹{{ my_pending_amount|default:"0.00"|floatformat:2 }}</div>
+    <div class="stat-foot">
+      <span>{% if my_pending_amount > 0 %}Due clearance pending{% else %}All settled{% endif %}</span>
+      <a href="{% url 'maintenance_list' %}" class="stat-link">Bills <svg class="i"><use href="#i-arrow"/></svg></a>
     </div>
-  </div>
+  </article>
 
-  <div class="kpi-card glass-panel">
-    <div class="kpi-header">
-      <span class="kpi-title">OpenCV Gate Pass</span>
-      <div class="kpi-icon-box kpi-icon-emerald"><i class="fa-solid fa-fingerprint"></i></div>
+  <article class="stat s-sky">
+    <div class="stat-head">
+      <span class="stat-label">Gate Face Pass</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-finger"/></svg></span>
     </div>
-    <div class="kpi-value" style="font-size: 1.4rem; color: {% if user.face_photo %}var(--accent-emerald){% else %}var(--accent-amber){% endif %};">
-      {% if user.face_photo %}ACTIVE{% else %}PENDING{% endif %}
-    </div>
-    <div class="kpi-subtext">
+    <div class="stat-val">
       {% if user.face_photo %}
-      <a href="{% url 'face_terminal' %}" style="color: var(--accent-cyan); text-decoration: none;">Test gate scanner &rarr;</a>
+      <span class="enrolled"><i class="ring"></i>ENROLLED</span>
       {% else %}
-      <a href="{% url 'profile' %}" style="color: var(--accent-amber); text-decoration: none;">Upload photo &rarr;</a>
+      <span style="color: var(--amber); font-weight: 800;">PENDING</span>
       {% endif %}
     </div>
-  </div>
+    <div class="stat-foot">
+      <span>Biometric access</span>
+      <a href="{% url 'face_terminal' %}" class="stat-link">Gate <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
+
+  <article class="stat s-amber">
+    <div class="stat-head">
+      <span class="stat-label">Community Funds</span>
+      <span class="stat-ico"><svg class="i"><use href="#i-heart"/></svg></span>
+    </div>
+    <div class="stat-val">₹{{ my_funds_contributed|default:"0.00"|floatformat:2 }}</div>
+    <div class="stat-foot">
+      <span>My contributions</span>
+      <a href="{% url 'funds_list' %}" class="stat-link">Donate <svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+  </article>
   {% endif %}
-</div>
+</section>
 
-<!-- Main Two-Column Sections -->
-<div class="dashboard-grid-2">
-  <!-- Left Column: Tickets & Visitors -->
-  <div style="display: flex; flex-direction: column; gap: 28px;">
-    
-    <!-- Tickets Section -->
-    <div class="glass-panel" style="padding: 24px;">
-      <div class="section-header">
-        <h3 class="section-title">
-          <i class="fa-solid fa-screwdriver-wrench" style="color: var(--primary);"></i>
-          {% if user.is_admin_role or user.is_staff_role %}Recent Service Requests{% else %}My Complaints & Tickets{% endif %}
-        </h3>
-        <a href="{% url 'ticket_list' %}" class="btn btn-secondary btn-sm">View All &rarr;</a>
+<!-- ============================================================== -->
+<!-- 3. LOWER PANELS: FACILITIES & 24/7 SECURITY DESK               -->
+<!-- ============================================================== -->
+<section class="panels">
+  <!-- Community Facilities & Amenities Panel -->
+  <div class="panel s-emerald">
+    <div class="panel-head">
+      <span class="ico"><svg class="i"><use href="#i-building"/></svg></span>
+      <div>
+        <h3>Community Facilities &amp; Amenities</h3>
+        <p>Operational timings &amp; neighborhood facilities</p>
       </div>
-
-      {% if user.is_admin_role or user.is_staff_role %}
-        {% if recent_tickets %}
-        <div class="table-responsive">
-          <table class="glass-table">
-            <thead>
-              <tr>
-                <th>Ticket ID</th>
-                <th>Issue</th>
-                <th>Resident / Flat</th>
-                <th>Priority</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for t in recent_tickets %}
-              <tr>
-                <td><a href="{% url 'ticket_detail' t.id %}" class="badge-code" style="color: var(--accent-cyan); text-decoration: none;">{{ t.ticket_number }}</a></td>
-                <td><strong>{{ t.title|truncatechars:32 }}</strong></td>
-                <td>{{ t.resident.get_full_name|default:t.resident.username }} ({{ t.resident.flat_number }})</td>
-                <td>
-                  <span class="badge {% if t.priority == 'URGENT' %}badge-urgent{% elif t.priority == 'HIGH' %}badge-open{% else %}badge-progress{% endif %}">
-                    {{ t.get_priority_display }}
-                  </span>
-                </td>
-                <td>
-                  <span class="badge {% if t.status == 'RESOLVED' or t.status == 'CLOSED' %}badge-resolved{% elif t.status == 'IN_PROGRESS' %}badge-progress{% else %}badge-open{% endif %}">
-                    {{ t.get_status_display }}
-                  </span>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p style="color: var(--text-dim); padding: 12px 0;">No service tickets recorded yet.</p>
-        {% endif %}
-
-      {% else %}
-        {% if my_tickets %}
-        <div class="table-responsive">
-          <table class="glass-table">
-            <thead>
-              <tr>
-                <th>Ticket ID</th>
-                <th>Title</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for t in my_tickets %}
-              <tr>
-                <td><a href="{% url 'ticket_detail' t.id %}" class="badge-code" style="color: var(--accent-cyan); text-decoration: none;">{{ t.ticket_number }}</a></td>
-                <td><strong>{{ t.title }}</strong></td>
-                <td>{{ t.get_category_display }}</td>
-                <td>
-                  <span class="badge {% if t.status == 'RESOLVED' or t.status == 'CLOSED' %}badge-resolved{% elif t.status == 'IN_PROGRESS' %}badge-progress{% else %}badge-open{% endif %}">
-                    {{ t.get_status_display }}
-                  </span>
-                </td>
-                <td style="color: var(--text-dim); font-size: 0.8rem;">{{ t.created_at|date:"M d" }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <div style="text-align: center; padding: 24px 0; color: var(--text-dim);">
-          <i class="fa-solid fa-circle-check" style="font-size: 2rem; color: var(--accent-emerald); margin-bottom: 8px;"></i>
-          <p>You have no active maintenance issues! Everything is in order.</p>
-          <a href="{% url 'ticket_create' %}" class="btn btn-primary btn-sm" style="margin-top: 12px;">Raise New Ticket</a>
-        </div>
-        {% endif %}
-      {% endif %}
+      <span class="chip ok"><i class="dot"></i>All Open Today</span>
     </div>
-
-    <!-- Gate Visitors Section -->
-    <div class="glass-panel" style="padding: 24px;">
-      <div class="section-header">
-        <h3 class="section-title">
-          <i class="fa-solid fa-id-card-clip" style="color: var(--accent-cyan);"></i>
-          {% if user.is_admin_role or user.is_staff_role %}Live Visitor Entries{% else %}My Expected Visitors & Passes{% endif %}
-        </h3>
-        <a href="{% url 'visitor_list' %}" class="btn btn-secondary btn-sm">All Logs &rarr;</a>
+    <div class="list">
+      <div class="row s-violet">
+        <span class="ico"><svg class="i"><use href="#i-building"/></svg></span>
+        <div class="row-body">
+          <b>Clubhouse &amp; Resident Lounge</b>
+          <small>6:00 AM – 10:30 PM</small>
+          <span class="pill">Community Hub</span>
+        </div>
       </div>
-
-      {% if user.is_admin_role or user.is_staff_role %}
-        {% if recent_visitors %}
-        <div class="table-responsive">
-          <table class="glass-table">
-            <thead>
-              <tr>
-                <th>Visitor</th>
-                <th>Purpose</th>
-                <th>Unit</th>
-                <th>Mode</th>
-                <th>Status</th>
-                <th>Entry</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for v in recent_visitors %}
-              <tr>
-                <td><strong>{{ v.visitor_name }}</strong></td>
-                <td>{{ v.purpose }}</td>
-                <td>{{ v.flat_number }}</td>
-                <td><span class="badge-code">{{ v.get_entry_type_display }}</span></td>
-                <td>
-                  <span class="badge {% if v.status == 'INSIDE' %}badge-open{% elif v.status == 'CHECKED_OUT' %}badge-resolved{% else %}badge-urgent{% endif %}">
-                    {{ v.get_status_display }}
-                  </span>
-                </td>
-                <td style="color: var(--text-dim); font-size: 0.8rem;">{{ v.entry_time|date:"H:i" }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+      <div class="row s-emerald">
+        <span class="ico"><svg class="i"><use href="#i-waves"/></svg></span>
+        <div class="row-body">
+          <b>Temperature-Controlled Pool</b>
+          <small>6:00 AM – 9:00 PM</small>
+          <span class="pill">Cleaned • 27°C</span>
         </div>
-        {% else %}
-        <p style="color: var(--text-dim); padding: 12px 0;">No visitor entries logged today.</p>
-        {% endif %}
-
-      {% else %}
-        {% if my_recent_visitors %}
-        <div class="table-responsive">
-          <table class="glass-table">
-            <thead>
-              <tr>
-                <th>Guest</th>
-                <th>Pass Code</th>
-                <th>Status</th>
-                <th>Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for v in my_recent_visitors %}
-              <tr>
-                <td><strong>{{ v.visitor_name }}</strong></td>
-                <td><span class="badge-code" style="color: var(--accent-emerald);">{{ v.pass_code }}</span></td>
-                <td>
-                  <span class="badge {% if v.status == 'INSIDE' %}badge-open{% else %}badge-resolved{% endif %}">
-                    {{ v.get_status_display }}
-                  </span>
-                </td>
-                <td style="color: var(--text-dim); font-size: 0.8rem;">{{ v.entry_time|date:"M d, H:i" }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+      </div>
+      <div class="row s-sky">
+        <span class="ico"><svg class="i"><use href="#i-dumbbell"/></svg></span>
+        <div class="row-body">
+          <b>Fitness &amp; Cardio Center</b>
+          <small>24/7 Resident Access</small>
+          <span class="pill">Trainer on Duty</span>
         </div>
-        {% else %}
-        <div style="text-align: center; padding: 20px 0; color: var(--text-dim);">
-          <p>No visitor passes created yet.</p>
-          <a href="{% url 'visitor_preapprove' %}" class="btn btn-secondary btn-sm" style="margin-top: 10px;">Pre-Approve Guest Pass</a>
+      </div>
+      <div class="row s-amber">
+        <span class="ico"><svg class="i"><use href="#i-racket"/></svg></span>
+        <div class="row-body">
+          <b>Badminton &amp; Tennis Courts</b>
+          <small>6:00 AM – 10:00 PM</small>
+          <span class="pill">Floodlights Ready</span>
         </div>
-        {% endif %}
-      {% endif %}
+      </div>
     </div>
-
   </div>
 
-  <!-- Right Column: Notice Board & Interactive Modules -->
-  <div style="display: flex; flex-direction: column; gap: 28px;">
-    
-    <!-- OpenCV Face Scanner Quick Action Card -->
-    <div class="glass-panel" style="padding: 24px; background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1px solid rgba(6, 182, 212, 0.35);">
-      <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 14px;">
-        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
-          <i class="fa-solid fa-camera-viewfinder"></i>
-        </div>
-        <div>
-          <h4 style="font-weight: 700; font-size: 1.05rem;">OpenCV Gate Terminal</h4>
-          <span style="font-size: 0.76rem; color: var(--accent-cyan); font-weight: 600;">Real-Time AI Facial Authentication</span>
-        </div>
-      </div>
-      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 18px;">
-        High-speed OpenCV face detection & LBPH recognition module running at society entry gates. Fast-tracks registered residents and staff.
-      </p>
-      <a href="{% url 'face_terminal' %}" class="btn btn-cyan" style="width: 100%;">
-        <i class="fa-solid fa-play"></i> Launch Scanner Terminal
-      </a>
-    </div>
-
-    <!-- Notice Board -->
-    <div class="glass-panel" style="padding: 24px;">
-      <div class="section-header">
-        <h3 class="section-title">
-          <i class="fa-solid fa-bullhorn" style="color: var(--accent-amber);"></i>
-          Society Notice Board
-        </h3>
-        <a href="{% url 'notice_list' %}" class="btn btn-secondary btn-sm">All &rarr;</a>
-      </div>
-
-      <div style="display: flex; flex-direction: column; gap: 14px;">
-        {% for n in recent_notices %}
-        <div style="padding: 14px; border-radius: var(--radius-md); background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass);">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-            <span class="badge {% if n.category == 'EMERGENCY' %}badge-urgent{% elif n.category == 'MAINTENANCE' %}badge-open{% else %}badge-progress{% endif %}">
-              {{ n.get_category_display }}
-            </span>
-            {% if n.is_pinned %}
-            <span style="font-size: 0.72rem; color: var(--accent-rose); font-weight: 700;"><i class="fa-solid fa-thumbtack"></i> PINNED</span>
-            {% endif %}
-          </div>
-          <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 4px;">{{ n.title }}</div>
-          <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">{{ n.content|truncatechars:100 }}</div>
-          <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 8px;">
-            By {{ n.author.get_full_name|default:n.author.username }} • {{ n.created_at|date:"M d, Y" }}
-          </div>
-        </div>
-        {% empty %}
-        <p style="color: var(--text-dim);">No notices posted yet.</p>
-        {% endfor %}
+  <!-- 24/7 Security & Emergency Desk Panel -->
+  <div class="panel s-rose">
+    <div class="panel-head">
+      <span class="ico"><svg class="i"><use href="#i-phone"/></svg></span>
+      <div>
+        <h3>24/7 Security &amp; Emergency Desk</h3>
+        <p>Direct contact for resident assistance</p>
       </div>
     </div>
-
-    <!-- Streamlit Admin Analytics Quick Card -->
-    {% if user.is_admin_role or user.is_staff_role %}
-    <div class="glass-panel" style="padding: 24px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1px solid rgba(236, 72, 153, 0.35);">
-      <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
-        <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(236, 72, 153, 0.2); color: #f472b6; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
-          <i class="fa-solid fa-chart-line"></i>
+    <div class="list">
+      <div class="row s-emerald">
+        <span class="ico"><svg class="i"><use href="#i-shield"/></svg></span>
+        <div class="row-body">
+          <b>Security Main Gate</b>
+          <small>Ext. 101</small>
         </div>
-        <div>
-          <h4 style="font-weight: 700; font-size: 1.05rem; color: #ffffff;">Streamlit Analytics Panel</h4>
-          <span style="font-size: 0.76rem; color: #f472b6; font-weight: 600;">Interactive Data Intelligence</span>
-        </div>
+        <button type="button" class="copy" data-copy="+91 98765 00101">+91 98765 00101</button>
       </div>
-      <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 16px;">
-        Visualizes society complaint turnaround times, peak visitor hours, monthly revenue curves, and flat occupancy metrics.
-      </p>
-      <a href="http://localhost:8501" target="_blank" class="btn btn-secondary" style="width: 100%; border-color: rgba(236, 72, 153, 0.4); color: #f472b6;">
-        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Streamlit Dashboard (Port 8501)
-      </a>
+      <div class="row s-violet">
+        <span class="ico"><svg class="i"><use href="#i-building"/></svg></span>
+        <div class="row-body">
+          <b>Facility &amp; Estate Office</b>
+          <small>Ext. 102</small>
+        </div>
+        <button type="button" class="copy" data-copy="+91 98765 00102">+91 98765 00102</button>
+      </div>
+      <div class="row s-rose">
+        <span class="ico"><svg class="i"><use href="#i-medic"/></svg></span>
+        <div class="row-body">
+          <b>Emergency Medical Service</b>
+          <small>Toll-free</small>
+        </div>
+        <button type="button" class="copy" data-copy="108">108</button>
+      </div>
+      <div class="row s-rose">
+        <span class="ico"><svg class="i"><use href="#i-siren"/></svg></span>
+        <div class="row-body">
+          <b>Police Control Helpline</b>
+          <small>Emergency</small>
+        </div>
+        <button type="button" class="copy" data-copy="100">100</button>
+      </div>
     </div>
-    {% endif %}
-
+    <p class="hint"><svg class="i"><use href="#i-phone"/></svg>Tap a number to copy it, then dial from your phone.</p>
   </div>
-</div>
+</section>
+
+<p class="foot">Emerald Heights Residency • AegisGate Core v2.4</p>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+  var reduced = false;
+  try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+
+  // Duplicate the ticker content once for infinite smooth marquee looping
+  var track = document.getElementById('tickerTrack');
+  if (track) {
+    track.innerHTML += track.innerHTML;
+  }
+
+  // Live date, clock, and greeting tick
+  function tick() {
+    var now = new Date();
+    try {
+      var todayEl = document.getElementById('today');
+      var clockEl = document.getElementById('clock');
+      var greetEl = document.getElementById('greet');
+      if (todayEl) {
+        todayEl.textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      }
+      if (clockEl) {
+        clockEl.textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+      }
+      if (greetEl) {
+        var h = now.getHours();
+        greetEl.textContent = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+      }
+    } catch (e) {}
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // 3D perspective tilt + spotlight on stat tiles (mouse only)
+  document.querySelectorAll('.stat').forEach(function(el) {
+    el.addEventListener('pointermove', function(e) {
+      if (e.pointerType !== 'mouse' || reduced) return;
+      var r = el.getBoundingClientRect();
+      var px = (e.clientX - r.left) / r.width;
+      var py = (e.clientY - r.top) / r.height;
+      el.style.setProperty('--mx', (px * 100) + '%');
+      el.style.setProperty('--my', (py * 100) + '%');
+      el.style.setProperty('--ry', ((px - 0.5) * 8).toFixed(2) + 'deg');
+      el.style.setProperty('--rx', ((0.5 - py) * 6).toFixed(2) + 'deg');
+    });
+    el.addEventListener('pointerleave', function() {
+      el.style.setProperty('--rx', '0deg');
+      el.style.setProperty('--ry', '0deg');
+    });
+  });
+
+  // Tap-to-copy phone numbers with toast notification
+  document.querySelectorAll('[data-copy]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var val = btn.getAttribute('data-copy');
+      var onSuccess = function() {
+        if (typeof toast === 'function') toast('Copied ' + val + ' to clipboard');
+      };
+      try {
+        navigator.clipboard.writeText(val).then(onSuccess, function() {
+          if (typeof toast === 'function') toast('Number: ' + val);
+        });
+      } catch (e) {
+        if (typeof toast === 'function') toast('Number: ' + val);
+      }
+    });
+  });
+})();
+</script>
 {% endblock %}

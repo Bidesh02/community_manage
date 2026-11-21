@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Maintenance Fee Collection & Dues{% endblock %}
+
+{% block content %}
+<!-- Billing Summary Cards -->
+<div class="kpi-grid" style="margin-bottom: 24px;">
+  <div class="kpi-card glass-panel">
+    <div class="kpi-header">
+      <span class="kpi-title">Total Invoiced</span>
+      <div class="kpi-icon-box kpi-icon-purple"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+    </div>
+    <div class="kpi-value">₹{{ total_amount }}</div>
+    <div class="kpi-subtext">All billing cycles</div>
+  </div>
+
+  <div class="kpi-card glass-panel">
+    <div class="kpi-header">
+      <span class="kpi-title">Collected / Cleared</span>
+      <div class="kpi-icon-box kpi-icon-emerald"><i class="fa-solid fa-circle-check"></i></div>
+    </div>
+    <div class="kpi-value" style="color: var(--accent-emerald);">₹{{ paid_amount }}</div>
+    <div class="kpi-subtext">Settled payments</div>
+  </div>
+
+  <div class="kpi-card glass-panel">
+    <div class="kpi-header">
+      <span class="kpi-title">Pending Outstanding</span>
+      <div class="kpi-icon-box kpi-icon-rose"><i class="fa-solid fa-clock"></i></div>
+    </div>
+    <div class="kpi-value" style="color: var(--accent-amber);">₹{{ pending_amount }}</div>
+    <div class="kpi-subtext">Awaiting payment</div>
+  </div>
+</div>
+
+<div class="glass-panel" style="padding: 28px;">
+  <div class="section-header" style="flex-wrap: wrap; gap: 14px;">
+    <div>
+      <h3 class="section-title">
+        <i class="fa-solid fa-receipt" style="color: var(--accent-cyan);"></i>
+        {% if user.is_admin_role or user.is_staff_role %}Society Maintenance Ledger{% else %}My Invoices & Dues{% endif %}
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">
+        Monthly society maintenance charges, utility allocations, and online payment settlement
+      </p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      {% if user.is_admin_role %}
+      <a href="{% url 'maintenance_generate' %}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Generate New Invoice
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+    <a href="{% url 'maintenance_list' %}" class="btn {% if not status_filter %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">All Bills</a>
+    <a href="{% url 'maintenance_list' %}?status=PENDING" class="btn {% if status_filter == 'PENDING' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">Pending</a>
+    <a href="{% url 'maintenance_list' %}?status=PAID" class="btn {% if status_filter == 'PAID' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">Paid</a>
+    <a href="{% url 'maintenance_list' %}?status=OVERDUE" class="btn {% if status_filter == 'OVERDUE' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">Overdue</a>
+  </div>
+
+  <!-- Bills Table -->
+  <div class="table-responsive">
+    <table class="glass-table">
+      <thead>
+        <tr>
+          <th>Invoice #</th>
+          <th>Resident / Flat</th>
+          <th>Amount</th>
+          <th>Due Date</th>
+          <th>Status</th>
+          <th>Transaction Details</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in page_obj %}
+        <tr>
+          <td><span class="badge-code">{{ b.bill_number }}</span></td>
+          <td>
+            <strong>{{ b.resident.get_full_name|default:b.resident.username }}</strong>
+            <div style="font-size: 0.75rem; color: var(--accent-cyan);">Unit {{ b.resident.flat_number|default:"N/A" }}</div>
+          </td>
+          <td><strong style="font-size: 1.05rem; font-family: 'JetBrains Mono', monospace;">₹{{ b.amount }}</strong></td>
+          <td style="color: var(--text-dim); font-size: 0.85rem;">{{ b.due_date|date:"M d, Y" }}</td>
+          <td>
+            <span class="badge {% if b.status == 'PAID' %}badge-resolved{% elif b.status == 'OVERDUE' %}badge-urgent{% else %}badge-open{% endif %}">
+              {{ b.get_status_display }}
+            </span>
+          </td>
+          <td>
+            {% if b.status == 'PAID' %}
+              <div style="font-size: 0.78rem; color: var(--text-muted);">
+                <i class="fa-solid fa-circle-check" style="color: var(--accent-emerald);"></i> {{ b.payment_method }}
+                <div class="badge-code" style="margin-top: 2px;">{{ b.transaction_id }}</div>
+              </div>
+            {% else %}
+              <span style="color: var(--text-dim); font-size: 0.8rem;">Awaiting Payment</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if b.status != 'PAID' %}
+              <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span class="badge badge-urgent" style="background: rgba(244, 63, 94, 0.18); color: var(--accent-rose); border: 1px solid rgba(244, 63, 94, 0.4); font-size: 0.8rem; font-weight: 700; padding: 5px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;">
+                  <i class="fa-solid fa-circle-xmark"></i> Not Paid
+                </span>
+                {% if user == b.resident or user.is_resident_role %}
+                <form method="POST" action="{% url 'maintenance_pay' b.id %}" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="payment_method" value="Instant UPI / Card Portal">
+                  <button type="submit" class="btn btn-emerald btn-sm" onclick="return confirm('Simulate instant settlement of ₹{{ b.amount }} for invoice {{ b.bill_number }}?')">
+                    <i class="fa-solid fa-credit-card"></i> Pay Now
+                  </button>
+                </form>
+                {% elif user.is_admin_role %}
+                <form method="POST" action="{% url 'maintenance_pay' b.id %}" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="payment_method" value="Cash / Cheque (Desk)">
+                  <button type="submit" class="btn btn-secondary btn-sm" onclick="return confirm('Mark invoice {{ b.bill_number }} as settled for {{ b.resident.get_full_name|default:b.resident.username }}?')">
+                    <i class="fa-solid fa-check"></i> Mark Paid
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            {% else %}
+              <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span class="badge badge-resolved" style="background: rgba(16, 185, 129, 0.18); color: var(--accent-emerald); border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.8rem; font-weight: 700; padding: 5px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;">
+                  <i class="fa-solid fa-circle-check"></i> Paid
+                </span>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="alert('Receipt: Invoice {{ b.bill_number }} settled via {{ b.payment_method }}. TXN: {{ b.transaction_id }}')">
+                  <i class="fa-solid fa-print"></i> Receipt
+                </button>
+              </div>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align: center; color: var(--text-dim); padding: 36px 0;">
+            No maintenance records found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="pagination-container">
+    <div style="font-size: 0.82rem; color: var(--text-dim);">
+      Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </div>
+    <div class="pagination-links">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-secondary btn-sm">&larr; Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

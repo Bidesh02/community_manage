@@ -3,111 +3,895 @@
 {% block title %}Resident Registration | AegisGate{% endblock %}
 
 {% block content %}
-<div style="max-width: 720px; margin: 30px auto; padding: 0 16px;">
-  <div class="glass-panel" style="padding: 36px;">
-    <div style="margin-bottom: 28px;">
-      <a href="{% url 'login' %}" style="color: var(--text-dim); text-decoration: none; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px;">
-        <i class="fa-solid fa-arrow-left"></i> Back to Sign In
-      </a>
-      <h2 style="font-size: 1.6rem; font-weight: 800;">Register Community Account</h2>
-      <p style="color: var(--text-muted); font-size: 0.9rem;">Join the society platform to manage visitors, payments, and biometric gate access.</p>
+<div style="max-width: 760px; margin: 30px auto; padding: 0 16px;">
+  <div class="glass-panel" style="padding: 36px; position: relative;">
+
+    {% if step == 'google_required' %}
+      <!-- ============================================================== -->
+      <!-- STEP 1: MANDATORY GOOGLE AUTHENTICATION GATE                   -->
+      <!-- ============================================================== -->
+
+      <!-- Step Indicator -->
+      <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 32px;">
+        <div style="display: flex; align-items: center; gap: 8px; color: var(--accent-cyan); font-weight: 700; font-size: 0.9rem;">
+          <span style="width: 30px; height: 30px; border-radius: 50%; background: var(--accent-cyan); color: #020617; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;">1</span>
+          <span>Google Verification</span>
+        </div>
+        <div style="width: 50px; height: 2px; background: rgba(255,255,255,0.12);"></div>
+        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-dim); font-weight: 500; font-size: 0.9rem;">
+          <span style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.06); color: var(--text-dim); display: flex; align-items: center; justify-content: center; font-size: 0.85rem;">2</span>
+          <span>Flat & Biometrics</span>
+        </div>
+      </div>
+
+      <!-- Back Link -->
+      <div style="margin-bottom: 24px;">
+        <a href="{% url 'login' %}" style="color: var(--text-dim); text-decoration: none; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px;">
+          <i class="fa-solid fa-arrow-left"></i> Back to Sign In
+        </a>
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 8px;">
+          <div style="width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, rgba(66, 133, 244, 0.2), rgba(52, 168, 83, 0.2)); border: 1px solid rgba(66, 133, 244, 0.35); display: flex; align-items: center; justify-content: center;">
+            <svg width="26" height="26" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0;">Resident Identity Verification</h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin: 2px 0 0 0;">
+              Society security protocols require all residents to authenticate with an active Google Account first.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Why Google Sign-In is Required -->
+      <div style="background: rgba(2, 6, 23, 0.6); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 22px; margin-bottom: 28px;">
+        <h4 style="font-size: 0.95rem; font-weight: 700; color: #ffffff; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-shield-halved" style="color: var(--accent-cyan);"></i> Why Google Authentication is Required:
+        </h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div style="display: flex; gap: 10px; align-items: flex-start;">
+            <i class="fa-solid fa-circle-check" style="color: var(--accent-emerald); font-size: 0.9rem; margin-top: 3px;"></i>
+            <div style="font-size: 0.84rem; color: var(--text-muted);">
+              <strong style="color: #ffffff;">Verified Resident Email:</strong> Maintenance invoices, visitor alert OTPs, and gate clearance notifications are delivered to your verified address.
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: flex-start;">
+            <i class="fa-solid fa-circle-check" style="color: var(--accent-emerald); font-size: 0.9rem; margin-top: 3px;"></i>
+            <div style="font-size: 0.84rem; color: var(--text-muted);">
+              <strong style="color: #ffffff;">Prevents Gate Infiltration:</strong> Guarantees that only authorized flat owners or verified tenants can claim residential units and biometric privileges.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Box -->
+      <div style="text-align: center; padding: 28px 20px; background: linear-gradient(180deg, rgba(66, 133, 244, 0.08) 0%, rgba(2, 6, 23, 0.4) 100%); border: 1px solid rgba(66, 133, 244, 0.3); border-radius: var(--radius-lg);">
+        <div style="font-weight: 700; font-size: 1.1rem; color: #ffffff; margin-bottom: 6px;">
+          Sign In to Verify Your Identity
+        </div>
+        <p style="font-size: 0.86rem; color: var(--text-muted); max-width: 460px; margin: 0 auto 22px auto;">
+          Click below to authenticate using your Google Account. Once verified, your resident enrollment form will be unlocked automatically.
+        </p>
+
+        <!-- Google Sign-In Trigger Button -->
+        <button type="button" id="btn-start-google" class="btn" style="background: #ffffff; color: #1f2937; border: 1px solid #d1d5db; font-weight: 700; padding: 13px 26px; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; gap: 12px; border-radius: 10px; box-shadow: 0 4px 18px rgba(0,0,0,0.35); cursor: pointer; transition: all 0.2s ease;">
+          <svg width="22" height="22" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <span>Sign In with Active Google Account</span>
+        </button>
+
+        <!-- Official Google Identity Services container (if client id is active) -->
+        <div id="g_id_onload"
+             data-client_id="{{ GOOGLE_CLIENT_ID }}"
+             data-callback="handleGoogleLiveCallback"
+             data-auto_prompt="false"
+             style="display: none;">
+        </div>
+        <div id="google-gsi-btn-container" style="display: none; margin-top: 14px; justify-content: center;"></div>
+      </div>
+
+    {% else %}
+      <!-- ============================================================== -->
+      <!-- STEP 2: RESIDENT REGISTRATION FORM (GOOGLE VERIFIED)           -->
+      <!-- ============================================================== -->
+
+      <!-- Step Indicator -->
+      <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 28px;">
+        <div style="display: flex; align-items: center; gap: 8px; color: var(--accent-emerald); font-weight: 700; font-size: 0.9rem;">
+          <span style="width: 30px; height: 30px; border-radius: 50%; background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald); border: 1px solid var(--accent-emerald); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;">
+            <i class="fa-solid fa-check"></i>
+          </span>
+          <span>Google Verified</span>
+        </div>
+        <div style="width: 50px; height: 2px; background: var(--accent-emerald);"></div>
+        <div style="display: flex; align-items: center; gap: 8px; color: var(--accent-cyan); font-weight: 700; font-size: 0.9rem;">
+          <span style="width: 30px; height: 30px; border-radius: 50%; background: var(--accent-cyan); color: #020617; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;">2</span>
+          <span>Flat & Biometrics</span>
+        </div>
+      </div>
+
+      <!-- Verified Google Identity Banner -->
+      <div style="padding: 16px 20px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.08) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); margin-bottom: 26px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          {% if google_user.picture %}
+            <img src="{{ google_user.picture }}" alt="Google Avatar" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--accent-emerald); object-fit: cover;">
+          {% else %}
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: #4285F4; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem;">
+              {{ google_user.name|slice:":1"|default:"G" }}
+            </div>
+          {% endif %}
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-weight: 700; color: #ffffff; font-size: 1rem;">{{ google_user.name }}</span>
+              <span style="background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald); border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; font-weight: 600;">
+                <i class="fa-solid fa-circle-check"></i> Google Account Verified
+              </span>
+            </div>
+            <div style="color: var(--text-muted); font-size: 0.84rem; display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+              <i class="fa-solid fa-envelope" style="font-size: 0.78rem;"></i> {{ google_user.email }}
+            </div>
+          </div>
+        </div>
+        <a href="{% url 'google_disconnect' %}" style="color: var(--accent-rose); font-size: 0.82rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.25);">
+          <i class="fa-solid fa-right-from-bracket"></i> Switch Google Account
+        </a>
+      </div>
+
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.5rem; font-weight: 800;">Complete Society Registration</h2>
+        <p style="color: var(--text-muted); font-size: 0.88rem;">Specify your residential flat assignment, contact details, and biometric gate pass photo.</p>
+      </div>
+
+      <form method="POST" action="{% url 'register' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+          <div class="form-group">
+            <label class="form-label">Username *</label>
+            {{ form.username }}
+            {% if form.username.errors %}<small style="color: var(--accent-rose);">{{ form.username.errors.0 }}</small>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              Verified Google Email 
+              <span style="color: var(--accent-emerald); font-size: 0.75rem; margin-left: 6px;"><i class="fa-solid fa-lock"></i> Locked</span>
+            </label>
+            <input type="email" name="email" value="{{ google_user.email }}" class="form-input" readonly style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.4); color: #ffffff; cursor: not-allowed;">
+            {% if form.email.errors %}<small style="color: var(--accent-rose);">{{ form.email.errors.0 }}</small>{% endif %}
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            {{ form.first_name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            {{ form.last_name }}
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+          <div class="form-group">
+            <label class="form-label">Role</label>
+            {{ form.role }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number *</label>
+            {{ form.phone_number }}
+          </div>
+        </div>
+
+        <!-- Role Authorization Code Box (Required for Staff / Admin) -->
+        <div id="role-code-container" style="display: none; margin: 6px 0 20px 0; padding: 18px 20px; border-radius: var(--radius-md); background: rgba(99, 102, 241, 0.08); border: 1px dashed rgba(99, 102, 241, 0.4); transition: all 0.3s ease;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+            <div id="role-code-icon" style="width: 36px; height: 36px; border-radius: 10px; background: rgba(99, 102, 241, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: var(--primary); flex-shrink: 0;">
+              <i class="fa-solid fa-key"></i>
+            </div>
+            <div>
+              <div id="role-code-title" style="font-weight: 700; font-size: 0.95rem; color: #ffffff;">
+                Role Authorization Code Required
+              </div>
+              <div id="role-code-desc" style="font-size: 0.82rem; color: var(--text-muted);">
+                Privileged accounts require an official access code.
+              </div>
+            </div>
+          </div>
+          <div style="position: relative;">
+            {{ form.role_code }}
+          </div>
+          {% if form.role_code.errors %}
+            <div style="color: var(--accent-rose); font-size: 0.82rem; font-weight: 600; margin-top: 6px; display: flex; align-items: center; gap: 6px; background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.35); border-radius: 6px; padding: 6px 10px;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>{{ form.role_code.errors.0 }}</span>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Security Gate Officer: Lives Here Option (Yes / No) -->
+        <div id="staff-lives-here-box" style="display: none; margin: 6px 0 20px 0; padding: 18px 20px; border-radius: var(--radius-md); background: rgba(6, 182, 212, 0.08); border: 1px dashed rgba(6, 182, 212, 0.45); transition: all 0.3s ease;">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(6, 182, 212, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: var(--accent-cyan); flex-shrink: 0;">
+                <i class="fa-solid fa-house-user"></i>
+              </div>
+              <div>
+                <div style="font-weight: 700; font-size: 0.95rem; color: #ffffff;">
+                  Do you live here on society premises? *
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                  Select "No" if you are an off-campus gate guard, or "Yes" if you reside in a society flat.
+                </div>
+              </div>
+            </div>
+
+            <!-- Radio choices: No / Yes -->
+            <div style="display: flex; align-items: center; gap: 18px; background: rgba(15, 23, 42, 0.7); padding: 8px 16px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12);">
+              <label style="display: inline-flex; align-items: center; gap: 7px; cursor: pointer; color: #ffffff; font-weight: 600; font-size: 0.88rem;">
+                <input type="radio" name="lives_here" id="radio_lives_here_no" value="no" checked onchange="handleStaffLivesHereChange()">
+                <span>No (Do not live here)</span>
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 7px; cursor: pointer; color: #ffffff; font-weight: 600; font-size: 0.88rem;">
+                <input type="radio" name="lives_here" id="radio_lives_here_yes" value="yes" onchange="handleStaffLivesHereChange()">
+                <span>Yes (Live here in flat)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Flat / Unit Number & Tower / Block (Shown for Residents & Staff who live here) -->
+        <div id="flat-tower-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+          <div class="form-group">
+            <label class="form-label">Flat / Unit Number *</label>
+            {{ form.flat_number }}
+            {% if form.flat_number.errors %}
+              <div style="color: var(--accent-rose); font-size: 0.82rem; font-weight: 600; margin-top: 5px; display: flex; align-items: flex-start; gap: 6px; background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.35); border-radius: 6px; padding: 6px 10px;">
+                <i class="fa-solid fa-triangle-exclamation" style="margin-top: 2px;"></i>
+                <span>{{ form.flat_number.errors.0 }}</span>
+              </div>
+            {% endif %}
+            <div id="flat-check-feedback" style="display: none; margin-top: 5px;"></div>
+            <small style="color: var(--text-dim); font-size: 0.75rem;">e.g. A-402, B-205</small>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tower / Block</label>
+            {{ form.block_tower }}
+            <small style="color: var(--text-dim); font-size: 0.75rem;">e.g. Tower 1, Emerald Block</small>
+          </div>
+        </div>
+
+        <!-- Resident Family Information (Visible & Required for Resident Member) -->
+        <div id="resident-family-container" style="margin: 6px 0 22px 0; padding: 22px; border-radius: var(--radius-md); background: rgba(16, 185, 129, 0.08); border: 1px dashed rgba(16, 185, 129, 0.45); transition: all 0.3s ease;">
+          <div style="display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px;">
+            <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(16, 185, 129, 0.22); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; color: var(--accent-emerald); flex-shrink: 0;">
+              <i class="fa-solid fa-people-roof"></i>
+            </div>
+            <div>
+              <div style="font-weight: 700; font-size: 0.98rem; color: #ffffff;">
+                Resident Family Information & Household Details *
+              </div>
+              <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+                Enter your total family number to automatically open distinct Name and Age sections for each member.
+              </div>
+            </div>
+          </div>
+
+          <!-- Family Number Input with Stepper Controls -->
+          <div style="display: flex; align-items: flex-end; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;">
+            <div class="form-group" style="min-width: 220px; margin-bottom: 0;">
+              <label class="form-label" style="display: flex; align-items: center; gap: 6px; font-weight: 700;">
+                <i class="fa-solid fa-hashtag" style="color: var(--accent-emerald);"></i>
+                Family Number *
+              </label>
+              {{ form.family_members_count }}
+              {% if form.family_members_count.errors %}
+                <small style="color: var(--accent-rose); font-weight: 600; display: block; margin-top: 4px;">{{ form.family_members_count.errors.0 }}</small>
+              {% endif %}
+              <small style="color: var(--text-dim); font-size: 0.74rem;">Total members living in flat</small>
+            </div>
+
+            <!-- Quick Preset Buttons -->
+            <div style="display: flex; gap: 6px; align-items: center; padding-bottom: 4px;">
+              <span style="font-size: 0.76rem; color: var(--text-muted); margin-right: 4px;">Quick select:</span>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickFamilyCount(1)" style="padding: 4px 10px; font-size: 0.78rem;">1</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickFamilyCount(2)" style="padding: 4px 10px; font-size: 0.78rem;">2</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickFamilyCount(3)" style="padding: 4px 10px; font-size: 0.78rem;">3</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickFamilyCount(4)" style="padding: 4px 10px; font-size: 0.78rem;">4</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickFamilyCount(5)" style="padding: 4px 10px; font-size: 0.78rem;">5</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Family Members List (Opens dynamic Name and Age sections according to family number) -->
+          <div id="dynamic-family-section" style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 16px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+              <div style="font-size: 0.88rem; font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-users" style="color: var(--accent-cyan);"></i>
+                <span>Family Members Details</span>
+                <span id="family-count-badge" class="badge" style="background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); font-weight: 700; font-size: 0.75rem;">
+                  0 Members
+                </span>
+              </div>
+              <span style="font-size: 0.76rem; color: var(--text-dim);">
+                Enter full name & age for each family member
+              </span>
+            </div>
+
+            <!-- Dynamic Member Cards populated via JS -->
+            <div id="family-members-dynamic-list" style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Dynamic Name and Age sections will be generated here -->
+            </div>
+
+            <!-- Hidden synced family_details textarea for model saving -->
+            <div style="display: none;">
+              {{ form.family_details }}
+            </div>
+
+            {% if form.family_details.errors %}
+              <div style="color: var(--accent-rose); font-size: 0.82rem; font-weight: 600; margin-top: 10px; display: flex; align-items: center; gap: 6px; background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.35); border-radius: 6px; padding: 8px 12px;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>{{ form.family_details.errors.0 }}</span>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Vehicle Plate Number (Optional)</label>
+          {{ form.vehicle_number }}
+          <small style="color: var(--text-dim); font-size: 0.75rem;">Enables automatic gate boom clearance for vehicles</small>
+        </div>
+
+        <!-- Biometric Face Enrollment Box -->
+        <div style="margin: 24px 0; padding: 20px; background: rgba(6, 182, 212, 0.06); border: 1px dashed rgba(6, 182, 212, 0.35); border-radius: var(--radius-md);">
+          <div style="display: flex; align-items: flex-start; gap: 14px;">
+            <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+              <i class="fa-solid fa-camera"></i>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-weight: 700; font-size: 0.95rem; color: #ffffff; margin-bottom: 2px;">
+                Face Recognition Gate Pass (OpenCV Biometric AI)
+              </div>
+              <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
+                Upload a clear frontal portrait photo. The OpenCV recognizer trains on your facial features with multi-angle augmentation so the gate scanner automatically opens for you!
+              </p>
+              {{ form.face_photo }}
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Custom Profile Avatar (Optional)</label>
+          {{ form.avatar }}
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+          <div class="form-group">
+            <label class="form-label">Society Password *</label>
+            {{ form.password }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm Password *</label>
+            {{ form.confirm_password }}
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 10px; padding: 14px; font-size: 1rem;">
+          <i class="fa-solid fa-shield-halved"></i> Complete Resident Registration
+        </button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- GOOGLE SIGN-IN MODAL (AUTHENTIC GOOGLE SELECTOR)               -->
+<!-- ============================================================== -->
+<div id="google-modal" style="display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+  <div style="background: #1e293b; border: 1px solid rgba(255,255,255,0.15); border-radius: 18px; max-width: 420px; width: 100%; padding: 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); position: relative;">
+    
+    <!-- Close button -->
+    <button type="button" onclick="closeGoogleModal()" style="position: absolute; top: 18px; right: 18px; background: transparent; border: none; color: var(--text-muted); font-size: 1.1rem; cursor: pointer;">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <!-- Google Header -->
+    <div style="text-align: center; margin-bottom: 22px;">
+      <div style="display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.15); margin-bottom: 12px;">
+        <svg width="24" height="24" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+      </div>
+      <h3 style="font-size: 1.2rem; font-weight: 700; color: #ffffff; margin: 0;">Sign in with Google</h3>
+      <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 4px;">Choose an active Google Account to continue to AegisGate</p>
     </div>
 
-    <form method="POST" action="{% url 'register' %}" enctype="multipart/form-data">
-      {% csrf_token %}
-      
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
-        <div class="form-group">
-          <label class="form-label">Username *</label>
-          {{ form.username }}
-          {% if form.username.errors %}<small style="color: var(--accent-rose);">{{ form.username.errors.0 }}</small>{% endif %}
-        </div>
-        <div class="form-group">
-          <label class="form-label">Email Address *</label>
-          {{ form.email }}
-          {% if form.email.errors %}<small style="color: var(--accent-rose);">{{ form.email.errors.0 }}</small>{% endif %}
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
-        <div class="form-group">
-          <label class="form-label">First Name</label>
-          {{ form.first_name }}
-        </div>
-        <div class="form-group">
-          <label class="form-label">Last Name</label>
-          {{ form.last_name }}
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
-        <div class="form-group">
-          <label class="form-label">Role</label>
-          {{ form.role }}
-        </div>
-        <div class="form-group">
-          <label class="form-label">Phone Number</label>
-          {{ form.phone_number }}
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
-        <div class="form-group">
-          <label class="form-label">Flat / Unit Number</label>
-          {{ form.flat_number }}
-          <small style="color: var(--text-dim); font-size: 0.75rem;">e.g. A-402, B-105</small>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Tower / Block</label>
-          {{ form.block_tower }}
-          <small style="color: var(--text-dim); font-size: 0.75rem;">e.g. Tower 1, Emerald Block</small>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Vehicle Plate Number (Optional)</label>
-        {{ form.vehicle_number }}
-        <small style="color: var(--text-dim); font-size: 0.75rem;">Allows automated gate clearance</small>
-      </div>
-
-      <!-- Biometric Face Enrollment Box -->
-      <div style="margin: 24px 0; padding: 20px; background: rgba(6, 182, 212, 0.06); border: 1px dashed rgba(6, 182, 212, 0.35); border-radius: var(--radius-md);">
-        <div style="display: flex; align-items: flex-start; gap: 14px;">
-          <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
-            <i class="fa-solid fa-camera"></i>
+    <!-- Quick Verified Profiles -->
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px;">
+      <div onclick="selectGoogleAccount('Bidesh', 'bidesh02@gmail.com')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(66, 133, 244, 0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 36px; height: 36px; border-radius: 50%; background: #4285F4; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem;">
+            B
           </div>
-          <div style="flex: 1;">
-            <div style="font-weight: 700; font-size: 0.95rem; color: #ffffff; margin-bottom: 2px;">
-              Face Recognition Gate Pass (OpenCV Biometric Feature)
-            </div>
-            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
-              Upload a clear frontal portrait photo. The system extracts your facial embedding so the gate scanner automatically opens for you!
-            </p>
-            {{ form.face_photo }}
+          <div>
+            <div style="font-weight: 700; font-size: 0.9rem; color: #ffffff;">Bidesh</div>
+            <div style="color: var(--text-muted); font-size: 0.8rem;">bidesh02@gmail.com</div>
           </div>
         </div>
+        <i class="fa-solid fa-chevron-right" style="color: var(--text-dim); font-size: 0.8rem;"></i>
       </div>
+    </div>
 
-      <div class="form-group">
-        <label class="form-label">Profile Avatar</label>
-        {{ form.avatar }}
+    <!-- Divider -->
+    <div style="display: flex; align-items: center; gap: 10px; margin: 16px 0;">
+      <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+      <span style="font-size: 0.76rem; color: var(--text-dim); text-transform: uppercase;">or enter any active google account</span>
+      <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+    </div>
+
+    <!-- Custom Google Account Input -->
+    <form id="custom-google-form" onsubmit="handleCustomGoogleSubmit(event)">
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label class="form-label" style="font-size: 0.82rem;">Google Full Name</label>
+        <input type="text" id="g-input-name" class="form-input" placeholder="e.g. Alex Morgan" required style="font-size: 0.9rem; padding: 10px 14px;">
       </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
-        <div class="form-group">
-          <label class="form-label">Password *</label>
-          {{ form.password }}
-        </div>
-        <div class="form-group">
-          <label class="form-label">Confirm Password *</label>
-          {{ form.confirm_password }}
-        </div>
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label class="form-label" style="font-size: 0.82rem;">Active Google Email</label>
+        <input type="email" id="g-input-email" class="form-input" placeholder="e.g. alex.morgan@gmail.com" required style="font-size: 0.9rem; padding: 10px 14px;">
       </div>
-
-      <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 10px;">
-        <i class="fa-solid fa-user-plus"></i> Complete Resident Registration
+      <button type="submit" id="btn-submit-google-auth" class="btn btn-primary" style="width: 100%; padding: 11px; font-size: 0.92rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <i class="fa-solid fa-lock"></i>
+        <span>Verify & Proceed to Registration</span>
       </button>
     </form>
   </div>
 </div>
+
+<script>
+  function openGoogleModal() {
+    document.getElementById('google-modal').style.display = 'flex';
+  }
+
+  function closeGoogleModal() {
+    document.getElementById('google-modal').style.display = 'none';
+  }
+
+  // Handle Google Verification POST
+  async function submitGoogleVerification(name, email) {
+    const btn = document.getElementById('btn-submit-google-auth');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying Google Identity...';
+    }
+
+    try {
+      const response = await fetch("{% url 'google_verify' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({
+          action: "register",
+          simulate: true,
+          google_name: name,
+          google_email: email
+        })
+      });
+
+      const res = await response.json();
+      if (res.status === 'success') {
+        window.location.href = "{% url 'register' %}";
+      } else if (res.status === 'already_registered') {
+        alert(res.message);
+        if (res.login_url) window.location.href = res.login_url;
+      } else {
+        alert(res.message || "Failed to verify Google account.");
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-lock"></i> Verify & Proceed to Registration';
+        }
+      }
+    } catch (err) {
+      console.error("Google Auth error:", err);
+      alert("Authentication error. Please check your connection.");
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-lock"></i> Verify & Proceed to Registration';
+      }
+    }
+  }
+
+  function selectGoogleAccount(name, email) {
+    submitGoogleVerification(name, email);
+  }
+
+  function handleCustomGoogleSubmit(e) {
+    e.preventDefault();
+    const name = document.getElementById('g-input-name').value.trim();
+    const email = document.getElementById('g-input-email').value.trim();
+    if (!name || !email) {
+      alert("Please enter both your name and Google email address.");
+      return;
+    }
+    submitGoogleVerification(name, email);
+  }
+
+  // Live Google Identity Services callback
+  window.handleGoogleLiveCallback = function(response) {
+    fetch("{% url 'google_verify' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": "{{ csrf_token }}"
+      },
+      body: JSON.stringify({
+        action: "register",
+        credential: response.credential
+      })
+    })
+    .then(r => r.json())
+    .then(res => {
+      if (res.status === 'success') {
+        window.location.href = "{% url 'register' %}";
+      } else {
+        alert(res.message || "Google Verification failed.");
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Google Verification network error.");
+    });
+  };
+
+  // Wire up button click and live flat duplicate checker
+  document.addEventListener("DOMContentLoaded", () => {
+    const btnStart = document.getElementById('btn-start-google');
+    if (btnStart) {
+      btnStart.addEventListener('click', () => {
+        openGoogleModal();
+      });
+    }
+
+    // Live Room / Flat Number duplicate verification
+    const flatInput = document.getElementById("id_flat_number");
+    const feedbackBox = document.getElementById("flat-check-feedback");
+    let flatCheckTimer = null;
+
+    if (flatInput && feedbackBox) {
+      const checkFlatAvailability = () => {
+        const val = flatInput.value.trim();
+        if (!val) {
+          feedbackBox.style.display = "none";
+          flatInput.style.borderColor = "";
+          return;
+        }
+
+        clearTimeout(flatCheckTimer);
+        flatCheckTimer = setTimeout(async () => {
+          try {
+            const resp = await fetch(`/api/check-flat/?flat=${encodeURIComponent(val)}`);
+            const data = await resp.json();
+            feedbackBox.style.display = "block";
+            if (!data.available) {
+              flatInput.style.borderColor = "var(--accent-rose)";
+              feedbackBox.innerHTML = `
+                <div style="color: var(--accent-rose); font-size: 0.82rem; font-weight: 600; display: flex; align-items: flex-start; gap: 6px; background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.35); border-radius: 6px; padding: 6px 10px;">
+                  <i class="fa-solid fa-triangle-exclamation" style="margin-top: 2px;"></i>
+                  <span>${data.message}</span>
+                </div>
+              `;
+            } else {
+              flatInput.style.borderColor = "var(--accent-emerald)";
+              feedbackBox.innerHTML = `
+                <div style="color: var(--accent-emerald); font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                  <i class="fa-solid fa-circle-check"></i>
+                  <span>${data.message}</span>
+                </div>
+              `;
+            }
+          } catch (e) {
+            console.error("Flat check error:", e);
+          }
+        }, 280);
+      };
+
+      flatInput.addEventListener("input", checkFlatAvailability);
+      flatInput.addEventListener("blur", checkFlatAvailability);
+    }
+
+    // Dynamic Role Authorization Code, Staff Lives Here & Resident Family visibility
+    const roleSelect = document.getElementById("id_role");
+    const roleCodeBox = document.getElementById("role-code-container");
+    const roleCodeTitle = document.getElementById("role-code-title");
+    const roleCodeDesc = document.getElementById("role-code-desc");
+    const roleCodeIcon = document.getElementById("role-code-icon");
+    const roleCodeInput = document.getElementById("id_role_code");
+    const familyBox = document.getElementById("resident-family-container");
+    const staffLivesHereBox = document.getElementById("staff-lives-here-box");
+    const flatTowerContainer = document.getElementById("flat-tower-container");
+    const flatInput = document.getElementById("id_flat_number");
+
+    window.handleStaffLivesHereChange = function() {
+      const roleVal = roleSelect ? roleSelect.value : "";
+      if (roleVal !== "STAFF") return;
+
+      const radioYes = document.getElementById("radio_lives_here_yes");
+      if (radioYes && radioYes.checked) {
+        // YES -> do not remove Flat / Unit Number and Tower / Block
+        if (flatTowerContainer) flatTowerContainer.style.display = "grid";
+        if (flatInput) {
+          flatInput.required = true;
+          if (flatInput.value === "Security Gatehouse") flatInput.value = "";
+        }
+      } else {
+        // NO -> remove Flat / Unit Number and Tower / Block from view
+        if (flatTowerContainer) flatTowerContainer.style.display = "none";
+        if (flatInput) {
+          flatInput.required = false;
+          flatInput.value = "Security Gatehouse";
+        }
+        const blockInput = document.getElementById("id_block_tower");
+        if (blockInput && !blockInput.value) {
+          blockInput.value = "Security Post";
+        }
+      }
+    };
+
+    function updateRoleCodeVisibility() {
+      if (!roleSelect) return;
+      const roleVal = roleSelect.value;
+
+      // Handle Family Box for Resident Member
+      if (familyBox) {
+        if (roleVal === "RESIDENT" || !roleVal) {
+          familyBox.style.display = "block";
+        } else {
+          familyBox.style.display = "none";
+        }
+      }
+
+      // Handle Security Gate Officer Lives Here Option & Flat/Tower Visibility
+      if (roleVal === "STAFF") {
+        if (staffLivesHereBox) staffLivesHereBox.style.display = "block";
+        window.handleStaffLivesHereChange();
+      } else {
+        if (staffLivesHereBox) staffLivesHereBox.style.display = "none";
+        // For non-staff (Resident / Admin), Flat & Tower are always shown
+        if (flatTowerContainer) flatTowerContainer.style.display = "grid";
+        if (flatInput) {
+          flatInput.required = (roleVal === "RESIDENT");
+          if (flatInput.value === "Security Gatehouse") flatInput.value = "";
+        }
+      }
+
+      // Handle Privileged Role Passcode Box
+      if (!roleCodeBox) return;
+      if (roleVal === "STAFF") {
+        roleCodeBox.style.display = "block";
+        roleCodeBox.style.background = "rgba(6, 182, 212, 0.08)";
+        roleCodeBox.style.borderColor = "rgba(6, 182, 212, 0.45)";
+        roleCodeIcon.style.background = "rgba(6, 182, 212, 0.2)";
+        roleCodeIcon.innerHTML = '<i class="fa-solid fa-shield-halved" style="color: var(--accent-cyan);"></i>';
+        roleCodeTitle.innerHTML = 'Security Gate Officer Authorization Code *';
+        roleCodeDesc.innerHTML = 'Official security post code required (e.g. <code>security01</code>).';
+        if (roleCodeInput) roleCodeInput.placeholder = "Enter security code (e.g. security01)";
+      } else if (roleVal === "ADMIN") {
+        roleCodeBox.style.display = "block";
+        roleCodeBox.style.background = "rgba(245, 158, 11, 0.08)";
+        roleCodeBox.style.borderColor = "rgba(245, 158, 11, 0.45)";
+        roleCodeIcon.style.background = "rgba(245, 158, 11, 0.2)";
+        roleCodeIcon.innerHTML = '<i class="fa-solid fa-crown" style="color: var(--accent-amber);"></i>';
+        roleCodeTitle.innerHTML = 'Society Admin / Committee Board Passcode *';
+        roleCodeDesc.innerHTML = 'Official society admin committee code required (e.g. <code>admin01</code>).';
+        if (roleCodeInput) roleCodeInput.placeholder = "Enter admin code (e.g. admin01)";
+      } else {
+        roleCodeBox.style.display = "none";
+        if (roleCodeInput && !document.querySelector('.alert-error')) {
+          roleCodeInput.value = "";
+        }
+      }
+    }
+
+    if (roleSelect) {
+      roleSelect.addEventListener("change", updateRoleCodeVisibility);
+      updateRoleCodeVisibility();
+    }
+
+    // ==============================================================
+    // Dynamic Family Members (Name & Age) Sections
+    // ==============================================================
+    const familyCountInput = document.getElementById("id_family_members_count");
+    const dynamicFamilyList = document.getElementById("family-members-dynamic-list");
+    const familyBadge = document.getElementById("family-count-badge");
+    const familyDetailsTextarea = document.getElementById("id_family_details");
+
+    let existingMembers = [];
+
+    // Pre-populate from existing family_details if available
+    if (familyDetailsTextarea && familyDetailsTextarea.value.trim()) {
+      const lines = familyDetailsTextarea.value.trim().split('\n');
+      lines.forEach(line => {
+        const clean = line.trim();
+        if (!clean) return;
+        const match = clean.match(/^(.*?)(?:[\s,-]+Age[\s:]*|[\s,-]+age[\s:]*|\s*-\s*Age\s*|\s*-\s*)(\d+)/i);
+        if (match) {
+          existingMembers.push({ name: match[1].trim(), age: match[2].trim() });
+        } else {
+          existingMembers.push({ name: clean, age: '' });
+        }
+      });
+    }
+
+    // Pre-populate from POST data if form reloaded after error
+    {% if request.POST %}
+      {% for k, v in request.POST.items %}
+        {% if 'member_name_' in k %}
+          (function() {
+            const idx = parseInt("{{ k }}".replace('member_name_', ''), 10) - 1;
+            if (idx >= 0) {
+              if (!existingMembers[idx]) existingMembers[idx] = { name: '', age: '' };
+              existingMembers[idx].name = "{{ v|escapejs }}";
+            }
+          })();
+        {% endif %}
+        {% if 'member_age_' in k %}
+          (function() {
+            const idx = parseInt("{{ k }}".replace('member_age_', ''), 10) - 1;
+            if (idx >= 0) {
+              if (!existingMembers[idx]) existingMembers[idx] = { name: '', age: '' };
+              existingMembers[idx].age = "{{ v|escapejs }}";
+            }
+          })();
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+    window.setQuickFamilyCount = function(n) {
+      if (!familyCountInput) return;
+      familyCountInput.value = n;
+      window.renderFamilyMemberInputs();
+    };
+
+    window.syncFamilyDetails = function() {
+      if (!dynamicFamilyList || !familyDetailsTextarea) return;
+      const rows = dynamicFamilyList.querySelectorAll('.family-member-row');
+      const lines = [];
+      rows.forEach((row, idx) => {
+        const nameInput = row.querySelector('.member-name-input');
+        const ageInput = row.querySelector('.member-age-input');
+        const name = nameInput ? nameInput.value.trim() : '';
+        const age = ageInput ? ageInput.value.trim() : '';
+        if (name || age) {
+          lines.push(`${name || 'Member ' + (idx + 1)} - Age ${age || 'N/A'}`);
+        }
+      });
+      familyDetailsTextarea.value = lines.join('\n');
+    };
+
+    window.renderFamilyMemberInputs = function() {
+      if (!familyCountInput || !dynamicFamilyList) return;
+
+      const rawVal = familyCountInput.value.trim();
+      let count = parseInt(rawVal, 10);
+      if (isNaN(count) || count < 0) count = 0;
+      if (count > 25) count = 25;
+
+      if (familyBadge) {
+        familyBadge.textContent = `${count} ${count === 1 ? 'Member' : 'Members'}`;
+      }
+
+      // Preserve currently entered values in active inputs before re-rendering
+      const currentRows = dynamicFamilyList.querySelectorAll('.family-member-row');
+      currentRows.forEach((row, idx) => {
+        const nameInput = row.querySelector('.member-name-input');
+        const ageInput = row.querySelector('.member-age-input');
+        if (nameInput || ageInput) {
+          if (!existingMembers[idx]) existingMembers[idx] = { name: '', age: '' };
+          if (nameInput && nameInput.value) existingMembers[idx].name = nameInput.value;
+          if (ageInput && ageInput.value) existingMembers[idx].age = ageInput.value;
+        }
+      });
+
+      dynamicFamilyList.innerHTML = '';
+
+      if (count === 0) {
+        dynamicFamilyList.innerHTML = `
+          <div style="text-align: center; padding: 20px 16px; background: rgba(0, 0, 0, 0.25); border: 1px dashed rgba(255, 255, 255, 0.12); border-radius: 8px; color: var(--text-dim); font-size: 0.84rem;">
+            <i class="fa-solid fa-arrow-up" style="color: var(--accent-emerald); margin-right: 6px;"></i>
+            Enter your total <strong>Family Number</strong> above to open the Name and Age sections for each member.
+          </div>
+        `;
+        if (familyDetailsTextarea) familyDetailsTextarea.value = '';
+        return;
+      }
+
+      for (let i = 1; i <= count; i++) {
+        const memberData = existingMembers[i - 1] || { name: '', age: '' };
+        const isHead = (i === 1);
+        const row = document.createElement('div');
+        row.className = 'family-member-row';
+        row.setAttribute('data-index', i);
+        row.style.cssText = 'background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 12px 14px; transition: all 0.2s ease;';
+
+        row.innerHTML = `
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span class="badge" style="background: ${isHead ? 'rgba(16, 185, 129, 0.2)' : 'rgba(6, 182, 212, 0.18)'}; color: ${isHead ? 'var(--accent-emerald)' : 'var(--accent-cyan)'}; font-size: 0.76rem; font-weight: 700; padding: 3px 9px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+              <i class="fa-solid ${isHead ? 'fa-user-tie' : 'fa-user'}"></i>
+              ${isHead ? 'Family Member 1 (Primary / Head)' : 'Family Member ' + i}
+            </span>
+            <span style="font-size: 0.74rem; color: var(--text-dim);">Member #${i} of ${count}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 140px; gap: 12px;">
+            <div>
+              <label style="font-size: 0.74rem; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: 600;">
+                Full Name *
+              </label>
+              <input type="text"
+                     name="member_name_${i}"
+                     class="form-input member-name-input"
+                     placeholder="e.g. ${isHead ? 'John Doe' : (i === 2 ? 'Jane Doe' : 'Tommy Doe')}"
+                     value="${memberData.name || ''}"
+                     required
+                     style="height: 38px; font-size: 0.88rem;">
+            </div>
+            <div>
+              <label style="font-size: 0.74rem; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: 600;">
+                Age *
+              </label>
+              <input type="number"
+                     name="member_age_${i}"
+                     class="form-input member-age-input"
+                     placeholder="Age"
+                     min="0"
+                     max="120"
+                     value="${memberData.age || ''}"
+                     required
+                     style="height: 38px; font-size: 0.88rem;">
+            </div>
+          </div>
+        `;
+
+        const nameInp = row.querySelector('.member-name-input');
+        const ageInp = row.querySelector('.member-age-input');
+        nameInp.addEventListener('input', window.syncFamilyDetails);
+        ageInp.addEventListener('input', window.syncFamilyDetails);
+
+        dynamicFamilyList.appendChild(row);
+      }
+
+      window.syncFamilyDetails();
+    };
+
+    if (familyCountInput) {
+      familyCountInput.addEventListener('input', window.renderFamilyMemberInputs);
+      familyCountInput.addEventListener('change', window.renderFamilyMemberInputs);
+
+      // Trigger initially on page load
+      if (familyCountInput.value && parseInt(familyCountInput.value, 10) > 0) {
+        window.renderFamilyMemberInputs();
+      } else if (existingMembers.length > 0) {
+        familyCountInput.value = existingMembers.length;
+        window.renderFamilyMemberInputs();
+      } else {
+        window.renderFamilyMemberInputs();
+      }
+    }
+  });
+</script>
+
+{% if GOOGLE_CLIENT_ID %}
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+{% endif %}
 {% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Pre-Approve Guest Pass{% endblock %}
+
+{% block content %}
+<div style="max-width: 680px; margin: 0 auto;">
+  <div class="glass-panel" style="padding: 32px;">
+    <div style="margin-bottom: 24px;">
+      <a href="{% url 'visitor_list' %}" style="color: var(--text-dim); text-decoration: none; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px;">
+        <i class="fa-solid fa-arrow-left"></i> Back to Visitors
+      </a>
+      <h2 style="font-size: 1.5rem; font-weight: 800;">Pre-Approve Guest or Delivery Pass</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Generate a digital pass code for your expected visitors so they bypass guard inquiry at the gate.
+      </p>
+    </div>
+
+    <form method="POST">
+      {% csrf_token %}
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+        <div class="form-group">
+          <label class="form-label">Visitor / Courier Name *</label>
+          <input type="text" name="visitor_name" class="form-input" placeholder="e.g. Alex Smith or Amazon Delivery" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number *</label>
+          <input type="text" name="phone_number" class="form-input" placeholder="+1 (555) 000-0000" required>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+        <div class="form-group">
+          <label class="form-label">Visit Purpose</label>
+          <select name="purpose" class="form-select">
+            <option value="Guest / Friend">Guest / Family</option>
+            <option value="Amazon / Courier Delivery">Delivery (Amazon, FedEx, etc.)</option>
+            <option value="Home Maintenance / Contractor">Technician / Contractor</option>
+            <option value="Cab / Taxi Pickup">Uber / Cab Pickup</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Vehicle Registration (Optional)</label>
+          <input type="text" name="vehicle_number" class="form-input" placeholder="e.g. NY-789-XYZ">
+        </div>
+      </div>
+
+      <div style="margin: 18px 0; padding: 16px; background: rgba(16, 185, 129, 0.08); border-radius: var(--radius-md); border: 1px solid rgba(16, 185, 129, 0.25);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fa-solid fa-circle-check" style="color: var(--accent-emerald); font-size: 1.2rem;"></i>
+          <div style="font-size: 0.85rem; color: var(--text-muted);">
+            Your host unit <strong style="color: white;">Unit {{ user.flat_number|default:"A-402" }}</strong> will automatically be tagged to this pass. A 6-character pass code will be issued instantly.
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+        <a href="{% url 'visitor_list' %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-emerald">
+          <i class="fa-solid fa-ticket"></i> Issue Pre-Approved Pass
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ campaign.title }} | Community Fund{% endblock %}
+{% block page_title %}Event Fund & Donation Drive{% endblock %}
+
+{% block content %}
+<div style="max-width: 1040px; margin: 0 auto;">
+  <div style="margin-bottom: 20px;">
+    <a href="{% url 'funds_list' %}" style="color: var(--text-dim); text-decoration: none; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 6px;">
+      <i class="fa-solid fa-arrow-left"></i> Back to All Community Funds
+    </a>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start;">
+    
+    <!-- Left Column: Campaign Information & Contributors Ledger -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+      
+      <!-- Main Details Card -->
+      <div class="glass-panel" style="padding: 28px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <span class="badge" style="background: rgba(236, 72, 153, 0.15); color: #ec4899; border: 1px solid rgba(236, 72, 153, 0.35); font-weight: 700; font-size: 0.8rem; padding: 4px 10px;">
+              <i class="fa-solid fa-tag"></i> {{ campaign.get_category_display }}
+            </span>
+            <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); border: 1px solid rgba(16, 185, 129, 0.35); font-weight: 700; font-size: 0.8rem; padding: 4px 10px;">
+              <i class="fa-solid fa-shield-halved"></i> Minimum Required: ₹{{ campaign.minimum_amount }}
+            </span>
+            {% if my_contribution_total > 0 %}
+            <span class="badge" style="background: rgba(236, 72, 153, 0.2); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.5); font-weight: 700; font-size: 0.8rem; padding: 4px 10px;">
+              <i class="fa-solid fa-heart"></i> You Donated: ₹{{ my_contribution_total }}
+            </span>
+            {% endif %}
+          </div>
+
+          <span class="badge {% if campaign.status == 'ACTIVE' %}badge-open{% elif campaign.status == 'COMPLETED' %}badge-resolved{% else %}badge-closed{% endif %}" style="font-size: 0.78rem;">
+            {{ campaign.get_status_display }}
+          </span>
+        </div>
+
+        <h2 style="font-size: 1.6rem; font-weight: 800; color: #ffffff; margin: 0 0 12px 0; line-height: 1.3;">
+          {{ campaign.title }}
+        </h2>
+
+        <div style="font-size: 0.82rem; color: var(--text-dim); margin-bottom: 20px; display: flex; gap: 18px; flex-wrap: wrap;">
+          <span><i class="fa-solid fa-user-shield" style="color: var(--accent-cyan);"></i> Organized by: <strong>{{ campaign.organizer_name }}</strong></span>
+          <span><i class="fa-solid fa-calendar-day"></i> Launched: {{ campaign.created_at|date:"M d, Y" }}</span>
+          {% if campaign.end_date %}
+          <span><i class="fa-solid fa-hourglass-half" style="color: var(--accent-amber);"></i> Deadline: {{ campaign.end_date|date:"M d, Y" }}</span>
+          {% endif %}
+        </div>
+
+        <!-- Description -->
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 18px; color: var(--text-bright); line-height: 1.65; font-size: 0.94rem; white-space: pre-line; margin-bottom: 20px;">
+          {{ campaign.description }}
+        </div>
+
+        <!-- Progress Metrics Box -->
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px;">
+            <div>
+              <span style="font-size: 1.8rem; font-weight: 800; color: #ffffff;">₹{{ campaign.total_collected }}</span>
+              <span style="font-size: 0.88rem; color: var(--text-dim); margin-left: 4px;">collected</span>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-size: 0.88rem; color: var(--text-muted);">Target Goal: <strong style="color: #ffffff;">₹{{ campaign.target_amount }}</strong></span>
+            </div>
+          </div>
+
+          <div style="width: 100%; height: 10px; background: rgba(255, 255, 255, 0.08); border-radius: 8px; overflow: hidden; margin-bottom: 8px;">
+            <div style="width: {{ campaign.progress_percentage }}%; height: 100%; background: linear-gradient(90deg, #ec4899 0%, #06b6d4 100%); border-radius: 8px; transition: width 0.4s ease;"></div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-dim);">
+            <span><strong style="color: var(--accent-cyan);">{{ campaign.progress_percentage }}%</strong> of goal achieved</span>
+            <span><i class="fa-solid fa-users" style="color: var(--accent-emerald);"></i> {{ campaign.donor_count }} resident contributions</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transparent Contributors Ledger -->
+      <div class="glass-panel" style="padding: 24px 28px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-receipt" style="color: var(--accent-emerald);"></i>
+            Resident Donors & Amounts
+          </h3>
+          <span class="badge" style="background: rgba(255,255,255,0.06); font-size: 0.75rem;">
+            {{ contributions|length }} Recorded
+          </span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          {% for c in contributions %}
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(236,72,153,0.15); color: #ec4899; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;">
+                <i class="fa-solid fa-heart"></i>
+              </div>
+              <div>
+                <div style="font-weight: 700; color: #ffffff; font-size: 0.94rem;">
+                  {{ c.display_contributor_name }}
+                  {% if c.contributor.flat_number and not c.is_anonymous %}
+                  <span style="font-size: 0.76rem; color: var(--accent-cyan); font-weight: 600; margin-left: 6px;">[{{ c.contributor.flat_number }}]</span>
+                  {% endif %}
+                </div>
+                {% if c.note %}
+                <div style="font-size: 0.82rem; color: var(--text-bright); font-style: italic; margin-top: 2px;">
+                  "{{ c.note }}"
+                </div>
+                {% endif %}
+                <div style="font-size: 0.74rem; color: var(--text-dim); margin-top: 3px;">
+                  {{ c.created_at|date:"M d, Y • h:i A" }} • {{ c.payment_method }}
+                </div>
+              </div>
+            </div>
+
+            <div style="text-align: right;">
+              <div style="font-size: 1.15rem; font-weight: 800; color: var(--accent-emerald); font-family: 'JetBrains Mono', monospace;">
+                +₹{{ c.amount }}
+              </div>
+              <span class="badge-code" style="font-size: 0.68rem; margin-top: 3px; display: inline-block;">
+                {{ c.transaction_id }}
+              </span>
+            </div>
+          </div>
+          {% empty %}
+          <div style="text-align: center; padding: 36px 0; color: var(--text-dim);">
+            <i class="fa-solid fa-hand-holding-heart" style="font-size: 2rem; color: #ec4899; margin-bottom: 8px;"></i>
+            <div style="font-weight: 600; color: #ffffff;">No contributions yet</div>
+            <div style="font-size: 0.82rem; margin-top: 4px;">Be the first resident to contribute to this community drive!</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Contribution / Donation Form -->
+    <div id="contributeSection" class="glass-panel" style="padding: 26px; position: sticky; top: 20px;">
+      <h3 style="margin: 0 0 6px 0; font-size: 1.2rem; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-indian-rupee-sign" style="color: #ec4899;"></i>
+        Contribute Funds
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.84rem; margin: 0 0 18px 0;">
+        Support this community initiative with an instant resident donation.
+      </p>
+
+      {% if campaign.status != 'CLOSED' %}
+      <!-- Minimum Contribution Alert -->
+      <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 16px; font-size: 0.84rem; color: #fde68a;">
+        <div style="font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+          <i class="fa-solid fa-circle-exclamation" style="color: var(--accent-amber);"></i> Minimum Contribution: ₹{{ campaign.minimum_amount }}
+        </div>
+        <div style="font-size: 0.78rem; color: var(--text-dim); line-height: 1.4;">
+          The committee has specified that resident members must give at least <strong>₹{{ campaign.minimum_amount }}</strong>. Higher contributions (₹1,000, ₹2,000, etc.) are welcome, but no amount below ₹{{ campaign.minimum_amount }} will be accepted.
+        </div>
+      </div>
+
+      <form method="POST" action="{% url 'fund_contribute' campaign.id %}" onsubmit="return validateDonationForm();">
+        {% csrf_token %}
+
+        <!-- Quick Amount Chips -->
+        <label class="form-label" style="margin-bottom: 8px;">Select Quick Amount (₹)</label>
+        <div id="quickAmountChips" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="setContributionAmount({{ campaign.minimum_amount }})">₹{{ campaign.minimum_amount }} (Min)</button>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label">Contribution Amount (₹) *</label>
+          {{ form.amount }}
+          <span style="font-size: 0.76rem; color: var(--accent-amber); display: block; margin-top: 4px;">
+            <i class="fa-solid fa-lock" style="font-size: 0.7rem;"></i> Minimum allowed: ₹{{ campaign.minimum_amount }}
+          </span>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label">Payment Method *</label>
+          {{ form.payment_method }}
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label">Wishing Note / Message (Optional)</label>
+          {{ form.note }}
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+          {{ form.is_anonymous }}
+          <label for="id_is_anonymous" style="font-size: 0.84rem; color: var(--text-muted); cursor: pointer; user-select: none;">
+            Contribute anonymously (hide name from public ledger)
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 13px; font-weight: 700; background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); border-color: #ec4899;">
+          <i class="fa-solid fa-lock" style="font-size: 0.85rem;"></i> Confirm Donation
+        </button>
+      </form>
+      {% else %}
+      <div style="text-align: center; padding: 24px 0; color: var(--text-dim);">
+        <i class="fa-solid fa-circle-check" style="font-size: 2rem; color: var(--accent-emerald); margin-bottom: 8px;"></i>
+        <div style="font-weight: 700; color: #ffffff;">Campaign Closed</div>
+        <div style="font-size: 0.82rem; margin-top: 4px;">This community collection is completed and closed.</div>
+      </div>
+      {% endif %}
+
+      <div style="margin-top: 18px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 14px; font-size: 0.76rem; color: var(--text-dim); display: flex; align-items: center; gap: 6px;">
+        <i class="fa-solid fa-shield-check" style="color: var(--accent-emerald);"></i>
+        Encrypted community transaction simulation with instant digital receipt.
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const minAmount = parseFloat("{{ campaign.minimum_amount }}") || 500;
+
+  function initQuickChips() {
+    const chipsContainer = document.getElementById('quickAmountChips');
+    if (!chipsContainer) return;
+    const base = minAmount;
+    const amounts = [
+      base,
+      base <= 500 ? 1000 : base * 2,
+      base <= 500 ? 2000 : base * 3,
+      base <= 500 ? 5000 : base * 5
+    ];
+    // Remove duplicates and sort
+    const uniqueAmts = Array.from(new Set(amounts)).sort((a,b) => a - b);
+    chipsContainer.innerHTML = uniqueAmts.map((amt, idx) => `
+      <button type="button" class="btn btn-secondary btn-sm" onclick="setContributionAmount(${amt})" style="font-size: 0.8rem; padding: 7px 4px; white-space: nowrap;">
+        ₹${amt.toLocaleString()}${idx === 0 ? ' (Min)' : ''}
+      </button>
+    `).join('');
+
+    const input = document.getElementById('id_amount');
+    if (input && (!input.value || parseFloat(input.value) < minAmount)) {
+      input.value = minAmount;
+    }
+  }
+
+  function setContributionAmount(val) {
+    const input = document.getElementById('id_amount');
+    if (input) {
+      input.value = val;
+      input.focus();
+    }
+  }
+
+  function validateDonationForm() {
+    const input = document.getElementById('id_amount');
+    const val = parseFloat(input ? input.value : 0);
+    if (isNaN(val) || val < minAmount) {
+      alert(`The committee board has established a minimum contribution of ₹${minAmount} for this drive.\n\nYou cannot donate an amount less than ₹${minAmount}.`);
+      if (input) {
+        input.value = minAmount;
+        input.focus();
+      }
+      return false;
+    }
+    return confirm(`Confirm contribution of ₹${val} towards {{ campaign.title }}?`);
+  }
+
+  document.addEventListener('DOMContentLoaded', initQuickChips);
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    initQuickChips();
+  }
+</script>
+{% endblock %}
