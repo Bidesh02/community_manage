@@ -217,38 +217,7 @@
           {% endif %}
         </div>
 
-        <!-- Security Gate Officer: Lives Here Option (Yes / No) -->
-        <div id="staff-lives-here-box" style="display: none; margin: 6px 0 20px 0; padding: 18px 20px; border-radius: var(--radius-md); background: rgba(6, 182, 212, 0.08); border: 1px dashed rgba(6, 182, 212, 0.45); transition: all 0.3s ease;">
-          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(6, 182, 212, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: var(--accent-cyan); flex-shrink: 0;">
-                <i class="fa-solid fa-house-user"></i>
-              </div>
-              <div>
-                <div style="font-weight: 700; font-size: 0.95rem; color: #ffffff;">
-                  Do you live here on society premises? *
-                </div>
-                <div style="font-size: 0.8rem; color: var(--text-muted);">
-                  Select "No" if you are an off-campus gate guard, or "Yes" if you reside in a society flat.
-                </div>
-              </div>
-            </div>
-
-            <!-- Radio choices: No / Yes -->
-            <div style="display: flex; align-items: center; gap: 18px; background: rgba(15, 23, 42, 0.7); padding: 8px 16px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12);">
-              <label style="display: inline-flex; align-items: center; gap: 7px; cursor: pointer; color: #ffffff; font-weight: 600; font-size: 0.88rem;">
-                <input type="radio" name="lives_here" id="radio_lives_here_no" value="no" checked onchange="handleStaffLivesHereChange()">
-                <span>No (Do not live here)</span>
-              </label>
-              <label style="display: inline-flex; align-items: center; gap: 7px; cursor: pointer; color: #ffffff; font-weight: 600; font-size: 0.88rem;">
-                <input type="radio" name="lives_here" id="radio_lives_here_yes" value="yes" onchange="handleStaffLivesHereChange()">
-                <span>Yes (Live here in flat)</span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <!-- Flat / Unit Number & Tower / Block (Shown for Residents & Staff who live here) -->
+        <!-- Flat / Unit Number & Tower / Block (Shown for Resident Members) -->
         <div id="flat-tower-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
           <div class="form-group">
             <label class="form-label">Flat / Unit Number *</label>
@@ -619,35 +588,8 @@
     const roleCodeIcon = document.getElementById("role-code-icon");
     const roleCodeInput = document.getElementById("id_role_code");
     const familyBox = document.getElementById("resident-family-container");
-    const staffLivesHereBox = document.getElementById("staff-lives-here-box");
     const flatTowerContainer = document.getElementById("flat-tower-container");
     const flatInput = document.getElementById("id_flat_number");
-
-    window.handleStaffLivesHereChange = function() {
-      const roleVal = roleSelect ? roleSelect.value : "";
-      if (roleVal !== "STAFF") return;
-
-      const radioYes = document.getElementById("radio_lives_here_yes");
-      if (radioYes && radioYes.checked) {
-        // YES -> do not remove Flat / Unit Number and Tower / Block
-        if (flatTowerContainer) flatTowerContainer.style.display = "grid";
-        if (flatInput) {
-          flatInput.required = true;
-          if (flatInput.value === "Security Gatehouse") flatInput.value = "";
-        }
-      } else {
-        // NO -> remove Flat / Unit Number and Tower / Block from view
-        if (flatTowerContainer) flatTowerContainer.style.display = "none";
-        if (flatInput) {
-          flatInput.required = false;
-          flatInput.value = "Security Gatehouse";
-        }
-        const blockInput = document.getElementById("id_block_tower");
-        if (blockInput && !blockInput.value) {
-          blockInput.value = "Security Post";
-        }
-      }
-    };
 
     function updateRoleCodeVisibility() {
       if (!roleSelect) return;
@@ -662,17 +604,21 @@
         }
       }
 
-      // Handle Security Gate Officer Lives Here Option & Flat/Tower Visibility
-      if (roleVal === "STAFF") {
-        if (staffLivesHereBox) staffLivesHereBox.style.display = "block";
-        window.handleStaffLivesHereChange();
+      // Handle Flat & Tower visibility:
+      // When Admin or Security Staff is chosen, Flat & Tower selection is hidden and unnecessary
+      // When Resident Member is chosen, Flat & Tower selection is shown and required
+      if (roleVal === "ADMIN" || roleVal === "STAFF") {
+        if (flatTowerContainer) flatTowerContainer.style.display = "none";
+        if (flatInput) {
+          flatInput.required = false;
+        }
       } else {
-        if (staffLivesHereBox) staffLivesHereBox.style.display = "none";
-        // For non-staff (Resident / Admin), Flat & Tower are always shown
         if (flatTowerContainer) flatTowerContainer.style.display = "grid";
         if (flatInput) {
-          flatInput.required = (roleVal === "RESIDENT");
-          if (flatInput.value === "Security Gatehouse") flatInput.value = "";
+          flatInput.required = true;
+          if (flatInput.value === "Security Gatehouse" || flatInput.value === "Admin Office") {
+            flatInput.value = "";
+          }
         }
       }
 

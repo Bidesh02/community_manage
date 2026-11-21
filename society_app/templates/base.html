@@ -600,22 +600,13 @@
           <svg class="i" style="color: var(--rose);"><use href="#i-heart"/></svg>
           <span>Community Funds</span>
         </a>
-      </nav>
-
-      {% if user.is_admin_role or user.is_staff_role %}
-      <div class="nav-label">ANALYTICS &amp; CONTROL</div>
-      <nav class="nav">
-        <a href="http://localhost:8501" target="_blank" rel="noopener noreferrer" class="nav-item" title="Open Streamlit interactive analytics">
-          <svg class="i" style="color: var(--rose);"><use href="#i-chart"/></svg>
-          <span style="color: var(--rose); font-weight: 600;">Streamlit Analytics</span>
-          <span class="tag" style="background: var(--rose-soft); color: var(--rose);">8501</span>
-        </a>
+        {% if user.is_admin_role or user.is_staff_role %}
         <a href="/admin/" target="_blank" rel="noopener noreferrer" class="nav-item">
           <svg class="i"><use href="#i-settings"/></svg>
           <span>Django Admin</span>
         </a>
+        {% endif %}
       </nav>
-      {% endif %}
 
       <!-- User Profile Mini-Card -->
       <a href="{% url 'profile' %}" class="me" title="View &amp; Edit Profile">

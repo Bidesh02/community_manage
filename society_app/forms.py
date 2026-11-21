@@ -91,32 +91,26 @@ class ResidentRegistrationForm(forms.ModelForm):
     def clean_flat_number(self):
         flat = self.cleaned_data.get('flat_number', '').strip()
         role = self.data.get('role', 'RESIDENT')
-        lives_here_val = str(self.data.get('lives_here', 'yes')).lower()
 
         if role == 'STAFF':
-            # Security Gate Officer: if they do not live here, flat & tower are not required
-            if lives_here_val in ['no', 'false', '0']:
-                return "Security Gatehouse"
-            else:
-                if not flat:
-                    raise forms.ValidationError("Please specify your residential Flat / Unit Number since you live on premises.")
+            return flat if flat else "Security Gatehouse"
         elif role == 'ADMIN':
-            if not flat:
-                return "Admin Office"
+            return flat if flat else "Admin Office"
         elif role == 'RESIDENT':
             if not flat:
                 raise forms.ValidationError("Room / Flat Number is required for resident registration.")
 
-        norm_flat = flat.replace(" ", "").upper()
-        existing_users = User.objects.filter(is_active=True).exclude(flat_number='')
+            norm_flat = flat.replace(" ", "").upper()
+            existing_users = User.objects.filter(is_active=True, role='RESIDENT').exclude(flat_number='')
 
-        for u in existing_users:
-            u_norm = u.flat_number.strip().replace(" ", "").upper()
-            if u_norm == norm_flat or u_norm.replace("-", "") == norm_flat.replace("-", ""):
-                owner_name = u.get_full_name() or u.username
-                raise forms.ValidationError(
-                    f"Room / Flat No. '{flat}' is already registered for another resident ({owner_name}, Flat {u.flat_number}). If you believe this is an error, please contact society management."
-                )
+            for u in existing_users:
+                u_norm = u.flat_number.strip().replace(" ", "").upper()
+                if u_norm == norm_flat or u_norm.replace("-", "") == norm_flat.replace("-", ""):
+                    owner_name = u.get_full_name() or u.username
+                    raise forms.ValidationError(
+                        f"Room / Flat No. '{flat}' is already registered for another resident ({owner_name}, Flat {u.flat_number}). If you believe this is an error, please contact society management."
+                    )
+            return flat
         return flat
 
     def clean(self):
@@ -186,17 +180,19 @@ class ResidentRegistrationForm(forms.ModelForm):
         if user.role == 'ADMIN':
             user.is_staff = True
             user.is_superuser = True
-            user.lives_here = True
+            user.lives_here = False
+            if not user.flat_number:
+                user.flat_number = "Admin Office"
+            if not user.block_tower:
+                user.block_tower = "Management Office"
         elif user.role == 'STAFF':
             user.is_staff = True
             user.is_superuser = False
-            if lives_here_val in ['no', 'false', '0']:
-                user.lives_here = False
+            user.lives_here = False
+            if not user.flat_number:
                 user.flat_number = "Security Gatehouse"
-                if not user.block_tower:
-                    user.block_tower = "Security Post"
-            else:
-                user.lives_here = True
+            if not user.block_tower:
+                user.block_tower = "Security Post"
         else:
             user.is_staff = False
             user.is_superuser = False
